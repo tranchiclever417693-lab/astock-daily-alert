@@ -122,7 +122,7 @@ footer{margin-top:34px;color:#586173;font-size:11.5px;text-align:center;line-hei
   </div>
 
   <div class="section">
-    <h3>近30个交易日</h3>
+    <h3>近90个交易日</h3>
     <div class="scroll">
       <table id="histTable">
         <thead><tr>
@@ -203,7 +203,7 @@ $('#idxline').innerHTML = '上证指数 <b>'+ (L.idx_close??'-') +'</b> &nbsp; '
 
 /* history table */
 (function(){
-  const rows=DATA.history.slice(-30).reverse();
+  const rows=DATA.history.slice(-90).reverse();
   const botTag={robust:['t-s1','稳健试仓'],watching:['t-watch','观察'],none:['t-none','—']};
   $('#histTable tbody').innerHTML = rows.map(h=>{
     const [bc,bt]=botTag[h.bottoming]||botTag.none;
