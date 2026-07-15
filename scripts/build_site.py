@@ -54,6 +54,7 @@ h1{font-size:22px;margin:0;letter-spacing:.5px}
 .on-red{color:var(--red)} .on-red .dot{background:var(--red);box-shadow:0 0 12px var(--red)}
 .on-green{color:var(--green)} .on-green .dot{background:var(--green)}
 .on-amber{color:var(--amber)} .on-amber .dot{background:var(--amber);box-shadow:0 0 10px var(--amber)}
+.on-neutral{color:var(--sub)} .on-neutral .dot{background:var(--sub)}
 .on-blue{color:var(--blue)} .on-blue .dot{background:var(--blue);box-shadow:0 0 10px var(--blue)}
 .sub{color:var(--sub);font-size:12.5px;margin-top:2px}
 .cond{list-style:none;padding:0;margin:14px 0 0}
@@ -82,12 +83,12 @@ th:first-child,td:first-child{text-align:left}
 .tag{display:inline-block;padding:1px 7px;border-radius:6px;font-size:11px;font-weight:600}
 .t-crash{background:var(--redbg);color:var(--red)}
 .t-conf{background:var(--greenbg);color:var(--green)}
-.t-s1{background:var(--amberbg);color:var(--amber)}
+.t-s1{background:var(--greenbg);color:var(--green)}
 .t-watch{background:#182234;color:var(--blue)}
 .t-none{color:#586173}
 .auxmk{display:inline-block;margin-left:4px;font-size:10px;padding:0 4px;border-radius:4px;
   background:var(--panel2);color:var(--sub);border:1px solid var(--line)}
-.auxmk.c{color:var(--green);border-color:#1f3a2a}
+.auxmk.c{color:var(--amber);border-color:#3a2f10}
 .scroll{overflow-x:auto;border:1px solid var(--line);border-radius:12px}
 .method{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px 18px;font-size:12.5px;color:var(--sub)}
 .method b{color:var(--txt)} .method code{color:var(--amber);font-family:var(--mono);font-size:12px}
@@ -174,9 +175,9 @@ $('#idxline').innerHTML = '上证指数 <b>'+ (L.idx_close??'-') +'</b> &nbsp; '
 (function(){
   const st=$('#botStatus'); const s=L.bottoming;
   const map={
-    robust:['on-amber','稳健版·一阶段试仓','主信号：稳健版超卖条件触发'],
+    robust:['on-green','稳健版·一阶段试仓','主信号：稳健版超卖条件触发'],
     watching:['on-blue','确认窗口观察中','前5个交易日内出现过稳健版试仓信号'],
-    none:['on-green','无稳健信号','市场未进入稳健版超卖试仓区'],
+    none:['on-neutral','无稳健信号','市场未进入稳健版超卖试仓区'],
   };
   const [cls,txt,sub]=map[s]||map.none;
   st.className='status '+cls; $('#botText').textContent=txt; $('#botSub').textContent=sub;
