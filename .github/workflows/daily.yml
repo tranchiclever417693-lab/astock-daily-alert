@@ -1,0 +1,44 @@
+name: daily-update
+
+# 收盘后约半小时更新：A股 15:00 收盘，北京时间 15:35 ≈ 07:35 UTC。
+# 仅工作日运行；节假日会因数据无新交易日而幂等跳过。
+on:
+  schedule:
+    - cron: "35 7 * * 1-5"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: daily-update
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install deps
+        run: pip install -r requirements.txt
+
+      - name: Run daily update
+        run: python scripts/daily_update.py
+
+      - name: Commit & push if changed
+        run: |
+          git config user.name  "astock-alert-bot"
+          git config user.email "actions@github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "no changes"
+          else
+            git commit -m "chore: daily update $(date -u +%Y-%m-%d)"
+            git push
+          fi

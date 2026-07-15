@@ -1,0 +1,55 @@
+{
+  "relaxed": {
+    "ret_cap": -0.005,
+    "ma10_cap": null,
+    "rsi": [
+      35,
+      0.4
+    ],
+    "k": [
+      30,
+      0.6
+    ],
+    "turn_floor": null,
+    "recall": 3,
+    "noise_days": 1,
+    "n_clusters": 4,
+    "leads": [
+      1,
+      1,
+      1
+    ],
+    "n_signals": 5,
+    "n_filters": 3
+  },
+  "robust": {
+    "ret_cap": -0.0075,
+    "ma10_cap": null,
+    "rsi": [
+      35,
+      0.4
+    ],
+    "k": [
+      30,
+      0.6
+    ],
+    "turn_floor": null,
+    "recall": 3,
+    "noise_days": 1,
+    "n_clusters": 4,
+    "leads": [
+      1,
+      1,
+      1
+    ],
+    "n_signals": 4,
+    "n_filters": 3
+  },
+  "events": [
+    "2025-11-24",
+    "2026-03-24",
+    "2026-06-09"
+  ],
+  "min_noise": 1,
+  "n_feasible": 185136
+}

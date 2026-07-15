@@ -1,0 +1,37 @@
+{
+  "crash_warning": {
+    "name": "大跌预警",
+    "conditions": [
+      "① 上证指数当日上涨",
+      "② 上证收盘价严格高于此前9个交易日最高收盘价（创10日收盘新高）",
+      "③ 全市场收盘价低于各自5日均线的个股占比 > 50%",
+      "④ 近3日累计下跌的个股占比 > 50%"
+    ],
+    "fire_when": "四条件全部满足",
+    "below_ma5_min": 0.50,
+    "down3_min": 0.50
+  },
+  "bottoming": {
+    "name": "筑底提醒",
+    "design": "2026-07-14-three-event-relaxed-staged-signal-design",
+    "events": ["2025-11-24", "2026-03-24", "2026-06-09"],
+    "stage1_robust": {
+      "label": "稳健版",
+      "idx_ret_max": -0.005,
+      "rsi_level": 35, "rsi_floor": 0.40,
+      "k_level": 30, "k_floor": 0.60,
+      "note": "3/3命中，18个月仅1次非事件信号，领先0–3个交易日；阈值处于稳定平台中心"
+    },
+    "stage1_relaxed": {
+      "label": "宽松版(早预警)",
+      "idx_ret_max": null,
+      "rsi_level": 35, "rsi_floor": 0.375,
+      "k_level": 20, "k_floor": 0.30,
+      "note": "复现全部三次回归基准日(含2026-03-20)，预警更早，信号更多"
+    },
+    "merge_gap": 5,
+    "confirm_window": 5,
+    "confirm_deep_panic": { "below_ma5_min": 0.85, "rsi_lt30_min": 0.50 },
+    "confirm_divergence": { "above_ma5_rebound_min": 0.08 }
+  }
+}
