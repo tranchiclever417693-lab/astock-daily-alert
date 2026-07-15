@@ -59,21 +59,14 @@ def bottoming_state(b, cfg):
 
     states = []
     for i in range(len(b)):
-        # is there an active (unconfirmed, unexpired) stage-1 signal covering day i?
-        active = False
-        for j in range(max(0, i - win), i + 1):
-            if robust[j] or relaxed[j]:
-                # confirmed on any day in (j, j+win]?
-                confirmed = any(confirm_today[t] for t in range(j + 1, min(len(b), j + 1 + win)))
-                if j == i:
-                    active = True
-                elif not any(confirm_today[t] for t in range(j + 1, i + 1)) and (i - j) <= win:
-                    active = True
+        # PRIMARY signal = 稳健版一阶段 only. Its confirmation window (watching)
+        # is driven solely by robust triggers; 宽松版 and 二阶段确认 are auxiliary.
+        robust_recent = any(robust[j] for j in range(max(0, i - win), i))  # prior days
         states.append({
             "stage1_robust": bool(robust[i]),
-            "stage1_relaxed": bool(relaxed[i]),
-            "stage1_active": bool(active),
-            "confirm_today": bool(confirm_today[i]),
+            "robust_active": bool(robust_recent),
+            "stage1_relaxed": bool(relaxed[i]),        # auxiliary
+            "confirm_today": bool(confirm_today[i]),   # auxiliary
             "deep_panic": bool(deep[i]),
             "divergence": bool(rebound[i]),
         })
@@ -90,17 +83,15 @@ def build_signals():
     for i in range(len(b)):
         r = b.iloc[i]
         st = bs[i]
-        # bottoming status label
-        if st["confirm_today"]:
-            bstatus = "confirmed"
-        elif st["stage1_robust"]:
-            bstatus = "stage1_robust"
-        elif st["stage1_relaxed"]:
-            bstatus = "stage1_relaxed"
-        elif st["stage1_active"]:
+        # PRIMARY status = 稳健版一阶段 (highest priority). watching = robust fired
+        # within the prior confirm-window. 宽松/确认 are reported separately as aux.
+        if st["stage1_robust"]:
+            bstatus = "robust"
+        elif st["robust_active"]:
             bstatus = "watching"
         else:
             bstatus = "none"
+        aux_confirm = "deep" if st["deep_panic"] else ("divergence" if st["divergence"] else "none")
         hist.append({
             "date": r["date"],
             "idx_close": None if pd.isna(r["idx_close"]) else round(float(r["idx_close"]), 2),
@@ -112,7 +103,9 @@ def build_signals():
             "pct_down3": round(float(r["pct_down3"]) * 100, 1),
             "pct_rsi_lt35": round(float(r["pct_rsi_lt35"]) * 100, 1),
             "pct_k_lt30": round(float(r["pct_k_lt30"]) * 100, 1),
-            "bottoming": bstatus,
+            "bottoming": bstatus,               # primary (robust-only)
+            "aux_relaxed": bool(st["stage1_relaxed"]),  # auxiliary: 宽松版早预警
+            "aux_confirm": aux_confirm,                 # auxiliary: 二阶段确认
         })
 
     latest = hist[-1]
@@ -136,6 +129,8 @@ if __name__ == "__main__":
           "| 筑底:", L["bottoming"])
     # backtest sanity: list all crash & bottoming stage-1 dates
     crash_days = [h["date"] for h in o["history"] if h["crash"]]
-    s1r = [h["date"] for h in o["history"] if h["bottoming"] == "stage1_robust"]
+    s1r = [h["date"] for h in o["history"] if h["bottoming"] == "robust"]
+    aux_rx = [h["date"] for h in o["history"] if h["aux_relaxed"]]
     print("历史大跌预警日:", crash_days)
-    print("稳健版一阶段信号日:", s1r)
+    print("稳健版一阶段信号日(主):", s1r)
+    print("宽松版早预警日(辅):", aux_rx)

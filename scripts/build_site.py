@@ -61,6 +61,12 @@ h1{font-size:22px;margin:0;letter-spacing:.5px}
 .cond li:first-child{border-top:none}
 .mk{font-family:var(--mono);font-weight:700;flex:none;width:16px}
 .yes{color:var(--green)} .no{color:var(--sub)}
+.aux{margin-top:11px;display:flex;flex-wrap:wrap;gap:8px}
+.auxpill{font-size:11.5px;padding:3px 9px;border-radius:20px;border:1px solid var(--line);
+  background:var(--panel2);color:var(--sub)}
+.auxpill.on{border-color:var(--amber);color:var(--amber)}
+.auxpill .auxlab{color:#6b7382;margin-right:3px}
+.auxpill.on .auxlab{color:var(--amber);opacity:.8}
 .bars{margin-top:16px;display:grid;gap:11px}
 .bar-row{font-size:12px}
 .bar-row .lab{display:flex;justify-content:space-between;color:var(--sub);margin-bottom:4px}
@@ -79,6 +85,9 @@ th:first-child,td:first-child{text-align:left}
 .t-s1{background:var(--amberbg);color:var(--amber)}
 .t-watch{background:#182234;color:var(--blue)}
 .t-none{color:#586173}
+.auxmk{display:inline-block;margin-left:4px;font-size:10px;padding:0 4px;border-radius:4px;
+  background:var(--panel2);color:var(--sub);border:1px solid var(--line)}
+.auxmk.c{color:var(--green);border-color:#1f3a2a}
 .scroll{overflow-x:auto;border:1px solid var(--line);border-radius:12px}
 .method{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px 18px;font-size:12.5px;color:var(--sub)}
 .method b{color:var(--txt)} .method code{color:var(--amber);font-family:var(--mono);font-size:12px}
@@ -106,6 +115,7 @@ footer{margin-top:34px;color:#586173;font-size:11.5px;text-align:center;line-hei
       <h2>筑底提醒</h2>
       <div class="status" id="botStatus"><span class="dot"></span><span id="botText"></span></div>
       <div class="sub" id="botSub"></div>
+      <div class="aux" id="botAux"></div>
       <div class="bars" id="botBars"></div>
     </div>
   </div>
@@ -160,24 +170,32 @@ $('#idxline').innerHTML = '上证指数 <b>'+ (L.idx_close??'-') +'</b> &nbsp; '
     `<li><span class="mk ${v?'yes':'no'}">${v?'✓':'·'}</span><span>${n} ${t}</span></li>`).join('');
 })();
 
-/* bottoming card */
+/* bottoming card — PRIMARY = 稳健版一阶段；宽松版与二阶段确认仅作辅助 */
 (function(){
   const st=$('#botStatus'); const s=L.bottoming;
   const map={
-    confirmed:['on-green','底部确认','阶段二确认（深度恐慌或宽度背离回升）'],
-    stage1_robust:['on-amber','一阶段·稳健试仓','稳健版超卖信号触发，等待5日内确认'],
-    stage1_relaxed:['on-amber','一阶段·宽松早预警','宽松版超卖信号触发，等待确认'],
-    watching:['on-blue','确认窗口观察中','前期试仓信号仍在5日确认窗口内'],
-    none:['on-green','无信号','市场未进入超卖试仓区'],
+    robust:['on-amber','稳健版·一阶段试仓','主信号：稳健版超卖条件触发'],
+    watching:['on-blue','确认窗口观察中','前5个交易日内出现过稳健版试仓信号'],
+    none:['on-green','无稳健信号','市场未进入稳健版超卖试仓区'],
   };
   const [cls,txt,sub]=map[s]||map.none;
   st.className='status '+cls; $('#botText').textContent=txt; $('#botSub').textContent=sub;
-  const bars=[
-    ['RSI<35 个股占比',L.pct_rsi_lt35,40,'var(--amber)'],
-    ['KDJ K<30 个股占比',L.pct_k_lt30,60,'var(--amber)'],
-    ['低于MA5 个股占比',L.pct_below_ma5,50,'var(--blue)'],
+
+  // auxiliary badges
+  const confMap={deep:'深度恐慌',divergence:'宽度背离回升',none:'未确认'};
+  const aux=[
+    ['宽松版早预警(辅)', L.aux_relaxed?'触发':'未触发', L.aux_relaxed],
+    ['二阶段确认(辅)', confMap[L.aux_confirm]||'未确认', L.aux_confirm!=='none'],
   ];
-  $('#botBars').innerHTML = bars.map(([lab,v,thr,col])=>`
+  $('#botAux').innerHTML = aux.map(([lab,val,on])=>
+    `<span class="auxpill ${on?'on':''}"><span class="auxlab">${lab}</span> ${val}</span>`).join('');
+
+  const bars=[
+    ['RSI<35 个股占比（稳健阈值≥40%）',L.pct_rsi_lt35,'var(--amber)'],
+    ['KDJ K<30 个股占比（稳健阈值≥60%）',L.pct_k_lt30,'var(--amber)'],
+    ['低于MA5 个股占比',L.pct_below_ma5,'var(--blue)'],
+  ];
+  $('#botBars').innerHTML = bars.map(([lab,v,col])=>`
     <div class="bar-row"><div class="lab"><span>${lab}</span><b>${pct(v)}</b></div>
     <div class="track"><div class="fill" style="width:${Math.min(100,v)}%;background:${col}"></div></div></div>`).join('');
 })();
@@ -185,16 +203,19 @@ $('#idxline').innerHTML = '上证指数 <b>'+ (L.idx_close??'-') +'</b> &nbsp; '
 /* history table */
 (function(){
   const rows=DATA.history.slice(-30).reverse();
-  const botTag={confirmed:['t-conf','确认'],stage1_robust:['t-s1','稳健试仓'],
-    stage1_relaxed:['t-s1','宽松预警'],watching:['t-watch','观察'],none:['t-none','—']};
+  const botTag={robust:['t-s1','稳健试仓'],watching:['t-watch','观察'],none:['t-none','—']};
   $('#histTable tbody').innerHTML = rows.map(h=>{
     const [bc,bt]=botTag[h.bottoming]||botTag.none;
+    // auxiliary markers (small, secondary): 宽=宽松版早预警, 确=二阶段确认
+    let aux='';
+    if(h.aux_relaxed) aux+='<span class="auxmk">宽</span>';
+    if(h.aux_confirm && h.aux_confirm!=='none') aux+='<span class="auxmk c">确</span>';
     const crash = h.crash?'<span class="tag t-crash">预警</span>':'<span class="t-none">—</span>';
     return `<tr>
       <td>${h.date}</td><td>${h.idx_close??'-'}</td><td>${fmtRet(h.idx_ret)}</td>
       <td>${h.pct_below_ma5}</td><td>${h.pct_down3}</td>
       <td>${h.pct_rsi_lt35}</td><td>${h.pct_k_lt30}</td>
-      <td>${crash}</td><td><span class="tag ${bc}">${bt}</span></td></tr>`;
+      <td>${crash}</td><td><span class="tag ${bc}">${bt}</span>${aux}</td></tr>`;
   }).join('');
 })();
 
@@ -209,13 +230,14 @@ $('#idxline').innerHTML = '上证指数 <b>'+ (L.idx_close??'-') +'</b> &nbsp; '
   </ul>
   <b>筑底提醒</b>（三事件宽松分阶段设计，回测命中 2025-11-24 / 2026-03-24 / 2026-06-09 三次主升浪，领先0–3个交易日）：
   <ul>
-    <li>一阶段·稳健版：上证当日 ≤ <code>${(s1.idx_ret_max*100).toFixed(2)}%</code>
+    <li><b>主信号 · 一阶段稳健版</b>（优先级最高）：上证当日 ≤ <code>${(s1.idx_ret_max*100).toFixed(2)}%</code>
         且 RSI&lt;${s1.rsi_level} 占比 ≥ <code>${(s1.rsi_floor*100)}%</code>
-        且 KDJ K&lt;${s1.k_level} 占比 ≥ <code>${(s1.k_floor*100)}%</code>（18个月仅1次非事件信号）。</li>
-    <li>一阶段·宽松版：RSI&lt;${s1r.rsi_level} 占比 ≥ <code>${(s1r.rsi_floor*100)}%</code>
-        且 KDJ K&lt;${s1r.k_level} 占比 ≥ <code>${(s1r.k_floor*100)}%</code>（预警更早，信号更多）。</li>
-    <li>二阶段确认：试仓信号后5个交易日内，出现深度恐慌（低于MA5≥85% 且 RSI&lt;30≥50%）
-        或价格—宽度背离（指数处5日低位而站上MA5占比较前3日低点回升≥8个百分点）即确认；否则试仓信号到期作废。</li>
+        且 KDJ K&lt;${s1.k_level} 占比 ≥ <code>${(s1.k_floor*100)}%</code>。
+        回测 3/3 命中，18个月仅1次非事件信号，阈值处于稳定平台中心 —— 页面顶部状态即以此为准。</li>
+    <li><b>辅助①</b> 宽松版早预警：RSI&lt;${s1r.rsi_level} 占比 ≥ <code>${(s1r.rsi_floor*100)}%</code>
+        且 KDJ K&lt;${s1r.k_level} 占比 ≥ <code>${(s1r.k_floor*100)}%</code>（预警更早、信号更多，仅作参考，表中标 <span class="auxmk">宽</span>）。</li>
+    <li><b>辅助②</b> 二阶段确认：稳健试仓后5个交易日内，出现深度恐慌（低于MA5≥85% 且 RSI&lt;30≥50%）
+        或价格—宽度背离（指数处5日低位而站上MA5占比较前3日低点回升≥8个百分点）即确认（仅作参考，表中标 <span class="auxmk c">确</span>）。</li>
   </ul>
   技术指标：MA为简单均线，RSI为Wilder 14日，KDJ为9/3/3（K=EMA(RSV,1/3)）。占比分母为当日该指标有效的个股数。仅使用当日及以前数据。`;
 })();
