@@ -51,7 +51,9 @@ def get_new_day(replay):
         return replay, day[["code", "close", "high", "low", "vol_shares"]].copy(), ic
     from fetch_live import fetch_snapshot, fetch_index_today
     idx_date, idx_close = fetch_index_today()
-    snap = fetch_snapshot()
+    codes = sorted(load_cache()["code"].unique())
+    snap = fetch_snapshot(codes=codes, date=idx_date)
+    print("snapshot source:", snap["src"].iloc[0] if len(snap) else "empty")
     snap["date"] = idx_date
     return idx_date, snap, idx_close
 
@@ -63,6 +65,12 @@ def main():
 
     date, snap, idx_close = get_new_day(args.replay)
     print("target session:", date, "| stocks:", len(snap), "| index:", idx_close)
+
+    # guard: never write a partial day (shrunken breadth denominator = bad signals)
+    MIN_STOCKS = 3000
+    if len(snap) < MIN_STOCKS:
+        raise SystemExit(f"only {len(snap)} stocks fetched (< {MIN_STOCKS}); "
+                         f"data source unreliable now — abort without writing.")
 
     # --- extend OHLCV cache (replace if the date already exists) ---
     cache = load_cache()
