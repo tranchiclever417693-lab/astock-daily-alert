@@ -39,8 +39,17 @@ def load_index():
     return idx
 
 
-def get_new_day(replay):
-    """Return (date_str, snapshot_df[code,close,high,low,vol_shares], idx_close)."""
+def stored_latest():
+    try:
+        d = pd.read_csv(os.path.join(DATA, "breadth_daily.csv"), usecols=["date"])["date"]
+        return str(d.astype(str).max())
+    except Exception:
+        return None
+
+
+def get_new_day(replay, force=False):
+    """Return (date_str, snapshot_df, idx_close), or None when there is no new
+    session to add (so the job is safe to run at any time / any timezone)."""
     if replay:
         cache = load_cache()
         day = cache[cache["date"] == replay]
@@ -49,10 +58,20 @@ def get_new_day(replay):
         idx = load_index()
         ic = float(idx.loc[idx["date"] == replay, "close"].iloc[0])
         return replay, day[["code", "close", "high", "low", "vol_shares"]].copy(), ic
+    import datetime
     from fetch_live import fetch_snapshot, fetch_index_today
-    idx_date, idx_close = fetch_index_today()
+    idx_date, idx_close = fetch_index_today()          # cheap: 1 call, tells us the session
+    stored = stored_latest()
+    if not force and stored and idx_date <= stored:
+        print(f"最新交易日 {idx_date} 不晚于已存 {stored}，无新数据，跳过（非交易日/重复运行）。")
+        return None
+    # intraday guard: don't accept today's bar until Beijing is past the close (15:00+buffer)
+    bj = datetime.datetime.utcnow() + datetime.timedelta(hours=8)
+    if not force and idx_date == bj.strftime("%Y-%m-%d") and (bj.hour * 60 + bj.minute) < 15 * 60 + 5:
+        print(f"北京时间 {bj:%H:%M}，{idx_date} 尚未收盘，跳过以免写入盘中数据。")
+        return None
     codes = sorted(load_cache()["code"].unique())
-    snap = fetch_snapshot(codes=codes, date=idx_date)
+    snap = fetch_snapshot(codes=codes, date=idx_date)  # expensive: only when there IS new data
     print("snapshot source:", snap["src"].iloc[0] if len(snap) else "empty")
     snap["date"] = idx_date
     return idx_date, snap, idx_close
@@ -61,9 +80,13 @@ def get_new_day(replay):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--replay", default=None, help="rebuild an existing cached date (offline test)")
+    ap.add_argument("--force", action="store_true", help="update even if the session isn't newer")
     args = ap.parse_args()
 
-    date, snap, idx_close = get_new_day(args.replay)
+    got = get_new_day(args.replay, args.force)
+    if got is None:
+        return  # nothing new; leave everything untouched
+    date, snap, idx_close = got
     print("target session:", date, "| stocks:", len(snap), "| index:", idx_close)
 
     # guard: never write a partial day (shrunken breadth denominator = bad signals)
