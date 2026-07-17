@@ -16,7 +16,8 @@ sys.path.insert(0, HERE)
 from indicators import build_panel, compute_breadth, add_index_conditions  # noqa: E402
 
 OHLCV_PKL = r"D:\A股数据_指标_扩展\_ohlcv.pkl"
-CACHE_DAYS = 60  # trading days of OHLCV kept in the repo for indicator warmup
+CACHE_DAYS = 60      # trading days of OHLCV kept in the repo for indicator warmup
+MIN_BREADTH_N = 3000  # a session needs a real cross-section for breadth % to mean anything
 
 
 def fetch_index():
@@ -46,7 +47,14 @@ def main():
 
     merged = add_index_conditions(breadth, idx)
     # keep only dates with a valid index row (drops pre-warmup / non-trading noise)
-    merged = merged[merged["idx_close"].notna()].reset_index(drop=True)
+    merged = merged[merged["idx_close"].notna()]
+    # The OHLCV history has ragged coverage: the earliest sessions contain only a
+    # handful of stocks, so their "share of the whole market" figures are noise
+    # (1 stock below MA5 => 100%). Drop any session without a real cross-section.
+    thin = (merged["n"] < MIN_BREADTH_N).sum()
+    if thin:
+        print(f"dropping {thin} sessions with < {MIN_BREADTH_N} stocks (ragged early coverage)")
+    merged = merged[merged["n"] >= MIN_BREADTH_N].reset_index(drop=True)
     merged.to_csv(os.path.join(DATA, "breadth_daily.csv"), index=False, encoding="utf-8-sig")
     print(f"breadth_daily.csv: {len(merged)} rows, {merged['date'].min()} .. {merged['date'].max()}")
 
