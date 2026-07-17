@@ -91,7 +91,14 @@ def build_signals():
             bstatus = "watching"
         else:
             bstatus = "none"
-        aux_confirm = "deep" if st["deep_panic"] else ("divergence" if st["divergence"] else "none")
+        # 二阶段确认只能由"此前5个交易日内的稳健版试仓信号"激活；
+        # 没有前置试仓时，即使当日指标满足深度恐慌/背离，也不是确认。
+        aux_confirm = "none"
+        if st["robust_active"]:
+            if st["deep_panic"]:
+                aux_confirm = "deep"
+            elif st["divergence"]:
+                aux_confirm = "divergence"
         hist.append({
             "date": r["date"],
             "idx_close": None if pd.isna(r["idx_close"]) else round(float(r["idx_close"]), 2),
