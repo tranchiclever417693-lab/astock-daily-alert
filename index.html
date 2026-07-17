@@ -10,6 +10,7 @@
   --txt:#e6e9ef; --sub:#8b95a5; --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
   --red:#ef4444; --redbg:#2a1416; --green:#22c55e; --greenbg:#0f2318;
   --amber:#f59e0b; --amberbg:#2a2110; --blue:#3b82f6;
+  --row-h:34.4px; --head-h:34px; --rows-visible:60;
 }
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--txt);
@@ -52,7 +53,8 @@ h1{font-size:22px;margin:0;letter-spacing:.5px}
 .fill{height:100%;border-radius:5px}
 .section{margin-top:30px}
 .section h3{font-size:13px;color:var(--sub);letter-spacing:1px;margin:0 0 12px;font-weight:600}
-table{width:100%;border-collapse:collapse;font-size:12.5px;font-family:var(--mono)}
+/* border-collapse must stay `separate` — sticky <th> does not stick when collapsed */
+table{width:100%;border-collapse:separate;border-spacing:0;font-size:12.5px;font-family:var(--mono)}
 th,td{padding:7px 8px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
 th{color:var(--sub);font-weight:500;position:sticky;top:0;background:var(--bg)}
 th:first-child,td:first-child{text-align:left}
@@ -65,7 +67,11 @@ th:first-child,td:first-child{text-align:left}
 .auxmk{display:inline-block;margin-left:4px;font-size:10px;padding:0 4px;border-radius:4px;
   background:var(--panel2);color:var(--sub);border:1px solid var(--line)}
 .auxmk.c{color:var(--amber);border-color:#3a2f10}
-.scroll{overflow-x:auto;border:1px solid var(--line);border-radius:12px}
+/* --rows-visible sets how many table rows fit before it scrolls (see build_site) */
+.scroll{overflow:auto;border:1px solid var(--line);border-radius:12px;
+  max-height:calc(var(--row-h) * var(--rows-visible) + var(--head-h));
+  overscroll-behavior:contain}
+.hint{color:var(--sub);font-weight:400;font-size:11.5px;letter-spacing:0}
 .method{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px 18px;font-size:12.5px;color:var(--sub)}
 .method b{color:var(--txt)} .method code{color:var(--amber);font-family:var(--mono);font-size:12px}
 .method ul{margin:8px 0;padding-left:20px} .method li{margin:3px 0}
@@ -98,7 +104,7 @@ footer{margin-top:34px;color:#586173;font-size:11.5px;text-align:center;line-hei
   </div>
 
   <div class="section">
-    <h3>近90个交易日</h3>
+    <h3>近200个交易日 <span class="hint">（上下滚动查看）</span></h3>
     <div class="scroll">
       <table id="histTable">
         <thead><tr>
@@ -179,7 +185,7 @@ $('#idxline').innerHTML = '上证指数 <b>'+ (L.idx_close??'-') +'</b> &nbsp; '
 
 /* history table */
 (function(){
-  const rows=DATA.history.slice(-90).reverse();
+  const rows=DATA.history.slice(-200).reverse();
   const botTag={robust:['t-s1','稳健试仓'],watching:['t-watch','观察'],none:['t-none','—']};
   $('#histTable tbody').innerHTML = rows.map(h=>{
     const [bc,bt]=botTag[h.bottoming]||botTag.none;
