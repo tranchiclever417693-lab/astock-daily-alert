@@ -66,7 +66,7 @@ def get_new_day(replay, force=False):
         print(f"最新交易日 {idx_date} 不晚于已存 {stored}，无新数据，跳过（非交易日/重复运行）。")
         return None
     # intraday guard: don't accept today's bar until Beijing is past the close (15:00+buffer)
-    bj = datetime.datetime.utcnow() + datetime.timedelta(hours=8)
+    bj = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=8)))  # Beijing
     if not force and idx_date == bj.strftime("%Y-%m-%d") and (bj.hour * 60 + bj.minute) < 15 * 60 + 5:
         print(f"北京时间 {bj:%H:%M}，{idx_date} 尚未收盘，跳过以免写入盘中数据。")
         return None

@@ -130,11 +130,36 @@ def fetch_snapshot(codes=None, date=None):
 
 
 def fetch_index_today():
-    """Return (date_str, close) for the Shanghai Composite latest session."""
+    """Return (date_str, close) for the Shanghai Composite's latest COMPLETED session.
+
+    The EOD endpoint (stock_zh_index_daily) lags for hours after the close, which
+    would make an after-close job think there is no new session. So once Beijing
+    is past the close we cross-check a realtime index quote: if its 昨收 equals the
+    EOD endpoint's latest close, then today is a genuinely new completed session and
+    its 最新价 is today's close. On a holiday the 昨收 won't match, so we correctly
+    fall back to the EOD value.
+    """
+    import datetime
     import akshare as ak
     df = _retry(lambda: ak.stock_zh_index_daily(symbol="sh000001"))
     last = df.iloc[-1]
-    return str(last["date"])[:10], float(last["close"])
+    eod_date, eod_close = str(last["date"])[:10], float(last["close"])
+
+    bj = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=8)))  # Beijing
+    today = bj.strftime("%Y-%m-%d")
+    closed = (bj.hour * 60 + bj.minute) >= 15 * 60 + 5
+    if today <= eod_date or not closed or bj.weekday() >= 5:
+        return eod_date, eod_close
+    try:
+        spot = _retry(lambda: ak.stock_zh_index_spot_sina(), tries=2, wait=2)
+        row = spot[spot["代码"].astype(str) == "sh000001"].iloc[0]
+        prev_close, last_px = float(row["昨收"]), float(row["最新价"])
+        if abs(prev_close - eod_close) < 0.05 and last_px > 0:
+            print(f"index: EOD 滞后({eod_date})，用实时收盘补 {today} = {last_px}")
+            return today, last_px
+    except Exception as e:  # noqa: BLE001
+        print("realtime index cross-check failed:", type(e).__name__)
+    return eod_date, eod_close
 
 
 def latest_trading_date_guess():
