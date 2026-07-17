@@ -31,7 +31,14 @@
     },
     "merge_gap": 5,
     "confirm_window": 5,
-    "confirm_deep_panic": { "below_ma5_min": 0.85, "rsi_lt30_min": 0.50 },
-    "confirm_divergence": { "above_ma5_rebound_min": 0.08 }
+    "_confirm_calibration": "研究脚本 research/confirm_search.py。二阶段只能由此前5个交易日内的稳健试仓激活。全局唯一一套参数，不按波段分别取值。",
+    "confirm_deep_panic": {
+      "below_ma5_min": 0.95, "rsi_lt30_min": 0.45,
+      "note": "被非事件日2025-04-08(91.8%/37.1%)在两个维度上完全支配——任何能确认事件的阈值都会误确认它。故设在历史极值之上仅作极端兜底：样本内从不触发，未经验证。确认实际由背离条件承担。"
+    },
+    "confirm_divergence": {
+      "idx_5d_low_tol": 0.0133, "above_ma5_rebound_min": 0.05,
+      "note": "tol可行区间[1.08%,1.58%)取中点1.33%(事件2约束下限/非事件04-07约束上限，两侧各留0.25pp)；Rb上界10.4pp(受事件3约束)取中位5.0pp，留5.4pp防漏余量并保住'明显回升'语义。3/3确认、0误确认。"
+    }
   }
 }

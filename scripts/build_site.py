@@ -237,9 +237,17 @@ $('#idxline').innerHTML = '上证指数 <b>'+ (L.idx_close??'-') +'</b> &nbsp; '
         回测 3/3 命中，18个月仅1次非事件信号，阈值处于稳定平台中心 —— 页面顶部状态即以此为准。</li>
     <li><b>辅助①</b> 宽松版早预警：RSI&lt;${s1r.rsi_level} 占比 ≥ <code>${(s1r.rsi_floor*100)}%</code>
         且 KDJ K&lt;${s1r.k_level} 占比 ≥ <code>${(s1r.k_floor*100)}%</code>（预警更早、信号更多，仅作参考，表中标 <span class="auxmk">宽</span>）。</li>
-    <li><b>辅助②</b> 二阶段确认：稳健试仓后5个交易日内，出现深度恐慌（低于MA5≥85% 且 RSI&lt;30≥50%）
-        或价格—宽度背离（指数处5日低位而站上MA5占比较前3日低点回升≥8个百分点）即确认（仅作参考，表中标 <span class="auxmk c">确</span>）。</li>
+    <li><b>辅助②</b> 二阶段确认（<b>必须由此前5个交易日内的稳健试仓激活</b>，无前置试仓则不算确认）：
+        出现价格—宽度背离（指数仍在5日低点 <code>${(b.confirm_divergence.idx_5d_low_tol*100).toFixed(2)}%</code> 以内，
+        且站上MA5占比较前3日低点回升 ≥ <code>${(b.confirm_divergence.above_ma5_rebound_min*100).toFixed(1)}个百分点</code>），
+        或深度恐慌（低于MA5 ≥ <code>${(b.confirm_deep_panic.below_ma5_min*100).toFixed(0)}%</code>
+        且 RSI&lt;30 ≥ <code>${(b.confirm_deep_panic.rsi_lt30_min*100).toFixed(0)}%</code>）即确认；
+        5日内未确认则该次试仓到期作废（仅作参考，表中标 <span class="auxmk c">确</span>）。</li>
   </ul>
+  阈值标定（<code>research/confirm_search.py</code>，全局唯一一套参数，不按波段分别取值）：背离条件在
+  可行区间中点取值，三次主升浪 3/3 确认且 0 误确认。深度恐慌条件在样本内被非事件日 2025-04-08 完全支配
+  （其宽度与 RSI 比任何事件日更极端），任何能确认事件的阈值都会误确认它，故只设在历史极值之上作极端兜底、
+  样本内从不触发；确认实际由背离条件承担。二阶段确认本身并非强过滤器，故仅作辅助。
   技术指标：MA为简单均线，RSI为Wilder 14日，KDJ为9/3/3（K=EMA(RSV,1/3)）。占比分母为当日该指标有效的个股数。仅使用当日及以前数据。`;
 })();
 

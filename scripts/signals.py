@@ -43,14 +43,21 @@ def bottoming_state(b, cfg):
     """Return per-day dicts describing stage-1 (both variants) and stage-2 state."""
     bt = cfg["bottoming"]
     above_ma5 = 1.0 - b["pct_below_ma5"].values
-    idx_5d_low = b["idx_5d_low"].fillna(False).values.astype(bool)
     dp = bt["confirm_deep_panic"]
     dv = bt["confirm_divergence"]
+
+    # (a) 深度恐慌：样本内被非事件日 2025-04-08 完全支配（其宽度/RSI 比任何事件日更极端），
+    #     故只能设在历史极值之上作极端兜底；样本内不触发，未经验证。
     deep = (b["pct_below_ma5"].values >= dp["below_ma5_min"]) & \
            (b["pct_rsi_lt30"].values >= dp["rsi_lt30_min"])
-    # rebound of above-MA5 breadth vs the low of the prior 3 sessions
+
+    # (b) 价格—宽度背离：指数仍在5日低位 tol 之内，同时站上MA5占比较前3日低点回升 >= Rb
+    idx_close = b["idx_close"].values
+    prev5_min = pd.Series(idx_close).rolling(5).min().values
+    idx_5d_ratio = idx_close / prev5_min                  # 1.0 == 正处5日低点
     prior3_min = pd.Series(above_ma5).shift(1).rolling(3).min().values
-    rebound = idx_5d_low & ((above_ma5 - prior3_min) >= dv["above_ma5_rebound_min"])
+    rebound = (idx_5d_ratio <= 1.0 + dv["idx_5d_low_tol"]) & \
+              ((above_ma5 - prior3_min) >= dv["above_ma5_rebound_min"])
     confirm_today = deep | rebound
 
     robust = stage1_mask(b, bt["stage1_robust"])
