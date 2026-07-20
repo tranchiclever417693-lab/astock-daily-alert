@@ -1,19 +1,19 @@
 {
- "updated": "2026-07-17 15:58",
- "latest_date": "2026-07-17",
+ "updated": "2026-07-20 15:18",
+ "latest_date": "2026-07-20",
  "latest": {
-  "date": "2026-07-17",
-  "idx_close": 3764.15,
-  "idx_ret": -3.05,
+  "date": "2026-07-20",
+  "idx_close": 3796.28,
+  "idx_ret": 0.85,
   "crash": false,
-  "c1": false,
+  "c1": true,
   "c2": false,
   "c3": true,
   "c4": true,
-  "pct_below_ma5": 79.3,
-  "pct_down3": 73.3,
-  "pct_rsi_lt35": 37.7,
-  "pct_k_lt30": 54.0,
+  "pct_below_ma5": 78.4,
+  "pct_down3": 79.9,
+  "pct_rsi_lt35": 46.6,
+  "pct_k_lt30": 56.9,
   "bottoming": "none",
   "aux_relaxed": true,
   "aux_confirm": "none"
@@ -77,7 +77,7 @@
     "above_ma5_rebound_min": 0.05,
     "note": "负责基本型底部B/C/D。tol下限1.08%(底部C的03-30，恰在临界)取1.33%留0.25pp余量；Rb上界10.4pp(受底部D约束)取5.0pp，留5.4pp防漏余量并保住'明显回升'语义。"
    },
-   "_confirm_result": "四个底部 4/4 确认(A走恐慌、B/C/D走背离，两条路线各司其职)。确认日基准率约35%——二阶段本身并非强过滤器，故仅作辅助。"
+   "_confirm_result": "四个底部 4/4 确认：A(2025-04-07)由深度恐慌于04-08确认，B/C/D由背离确认。经门控后全历史仅9/343天(2.6%)标为确认，均落在四个底部窗口内。但需注意：未门控的原始条件日基准率约35%，意味着任何试仓信号5日内大概率都会被确认——二阶段几乎不会否决一阶段，本身并非强过滤器，故仅作辅助。"
   }
  },
  "history": [
@@ -5908,6 +5908,23 @@
    "pct_down3": 73.3,
    "pct_rsi_lt35": 37.7,
    "pct_k_lt30": 54.0,
+   "bottoming": "none",
+   "aux_relaxed": true,
+   "aux_confirm": "none"
+  },
+  {
+   "date": "2026-07-20",
+   "idx_close": 3796.28,
+   "idx_ret": 0.85,
+   "crash": false,
+   "c1": true,
+   "c2": false,
+   "c3": true,
+   "c4": true,
+   "pct_below_ma5": 78.4,
+   "pct_down3": 79.9,
+   "pct_rsi_lt35": 46.6,
+   "pct_k_lt30": 56.9,
    "bottoming": "none",
    "aux_relaxed": true,
    "aux_confirm": "none"
