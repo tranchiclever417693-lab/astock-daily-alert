@@ -7,8 +7,16 @@ Both are retried; whichever succeeds first is used. Only close/high/low are
 needed by the shipped rules, so volume-unit differences are irrelevant.
 """
 import time
+import socket
 import datetime as dt
 import pandas as pd
+
+# Bound every blocking socket read so a stalled data-source connection can never
+# wedge the job forever (akshare/efinance use requests without their own read
+# timeout — a hung server socket would otherwise block indefinitely, as seen on
+# 2026-07-21 when the bulk 东财 call hung 27 min at 0 output). On timeout the call
+# raises, _retry moves on, and the source chain falls through to the next backend.
+socket.setdefaulttimeout(25)
 
 
 def _retry(fn, tries=5, wait=3):
