@@ -40,7 +40,11 @@ TEMPLATE = r"""<!doctype html>
 body{margin:0;background:var(--bg);color:var(--txt);
   font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
   line-height:1.55;-webkit-font-smoothing:antialiased}
-.wrap{max-width:960px;margin:0 auto;padding:22px 16px 60px}
+.wrap{max-width:960px;margin:0 auto;padding:18px 16px 60px}
+.nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.nav a{font-size:12.5px;color:var(--sub);text-decoration:none;padding:5px 12px;border:1px solid var(--line);border-radius:20px;background:var(--panel)}
+.nav a.on{color:var(--txt);border-color:var(--blue);background:var(--panel2)}
+.nav a:hover{color:var(--txt)}
 header{display:flex;flex-wrap:wrap;align-items:baseline;gap:10px 16px;margin-bottom:6px}
 h1{font-size:22px;margin:0;letter-spacing:.5px}
 .updated{color:var(--sub);font-size:13px;font-family:var(--mono)}
@@ -105,6 +109,11 @@ footer{margin-top:34px;color:#586173;font-size:11.5px;text-align:center;line-hei
 </head>
 <body>
 <div class="wrap">
+  <nav class="nav">
+    <a href="index.html" class="on">🏠 A股主站</a>
+    <a href="chinext.html">创业板</a>
+    <a href="star.html">科创板</a>
+  </nav>
   <header>
     <h1>A股每日风险预警</h1>
     <span class="updated" id="updated"></span>

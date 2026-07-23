@@ -134,6 +134,18 @@ def main():
 
     out = sig_mod.build_signals()
     build_site.render()
+
+    # --- 子板块（创业板 / 科创板）同步更新 ---
+    try:
+        import boards as boards_mod
+        import build_board_site
+        br = boards_mod.update_all(date, panel, DATA)
+        build_board_site.main()
+        for bid, r in br.items():
+            print(f"  [{bid}] 筑底={r['bottoming']} 大跌={r['crash']}")
+    except Exception as e:  # noqa: BLE001
+        print("子板块更新失败(不影响主站):", type(e).__name__, e)
+
     L = out["latest"]
     print(f"DONE {L['date']} | 大跌预警={L['crash']} 四条件={[L['c1'],L['c2'],L['c3'],L['c4']]} "
           f"| 筑底={L['bottoming']}")

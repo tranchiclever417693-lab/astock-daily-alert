@@ -1,0 +1,278 @@
+# -*- coding: utf-8 -*-
+"""子板块（创业板 / 科创板）风险预警引擎。
+
+与主站不同：这些规则是用户给定的固定阈值，无需参数搜索。个股宽度直接复用主站
+的全市场 OHLCV（按代码前缀过滤），只需额外抓两个板块指数的行情。
+
+指标口径与主站一致：MA 简单均线、RSI Wilder14、KDJ 9/3/3(K=EMA(RSV,1/3),
+D=EMA(K,1/3))、MACD 12/26/9(柱=2*(DIF-DEA))。
+"""
+import os
+import numpy as np
+import pandas as pd
+
+# ---- 板块配置 -------------------------------------------------------------
+BOARDS = {
+    "chinext": {
+        "id": "chinext",
+        "name": "创业板指风险预警",
+        "index_name": "创业板指",
+        "index_eod": "sz399006",
+        "index_sina": "399006",
+        "prefixes": ("300", "301"),
+        "page": "chinext.html",
+    },
+    "star": {
+        "id": "star",
+        "name": "科创板风险预警",
+        "index_name": "科创综指",
+        "index_eod": "sh000680",
+        "index_sina": "000680",
+        "prefixes": ("688", "689"),
+        "page": "star.html",
+    },
+}
+
+
+# ---- 指数指标 -------------------------------------------------------------
+def index_indicators(df: pd.DataFrame) -> pd.DataFrame:
+    """df: date, high, low, close, volume（升序）。返回加指标后的表。"""
+    g = df.sort_values("date").copy()
+    c, h, l, v = g["close"], g["high"], g["low"], g["volume"]
+    g["ma5"] = c.rolling(5).mean()
+    g["ma10"] = c.rolling(10).mean()
+    g["ret"] = c / c.shift(1) - 1.0
+    # RSI Wilder 14
+    d = c.diff()
+    up, dn = d.clip(lower=0), (-d).clip(lower=0)
+    rs = up.ewm(alpha=1 / 14, adjust=False).mean() / dn.ewm(alpha=1 / 14, adjust=False).mean()
+    g["rsi"] = 100 - 100 / (1 + rs)
+    # KDJ 9,3,3
+    low9, high9 = l.rolling(9).min(), h.rolling(9).max()
+    rsv = (c - low9) / (high9 - low9).replace(0, np.nan) * 100
+    g["K"] = rsv.ewm(alpha=1 / 3, adjust=False).mean()
+    g["D"] = g["K"].ewm(alpha=1 / 3, adjust=False).mean()
+    # MACD 12,26,9 —— 柱 = 2*(DIF-DEA)（红绿柱）
+    dif = c.ewm(span=12, adjust=False).mean() - c.ewm(span=26, adjust=False).mean()
+    dea = dif.ewm(span=9, adjust=False).mean()
+    g["dif"], g["dea"], g["macd"] = dif, dea, 2 * (dif - dea)
+    g["macd_prev"] = g["macd"].shift(1)
+    g["vol"] = v
+    g["vol_avg5"] = v.shift(1).rolling(5).mean()
+    g["max10"] = c.rolling(10).max()                    # 近10日(含当日)最高收盘
+    g["drawdown10"] = (g["max10"] - c) / g["max10"]     # 相对10日高点回撤
+    return g
+
+
+# ---- 板块个股宽度 ---------------------------------------------------------
+def board_breadth(panel: pd.DataFrame) -> pd.DataFrame:
+    """panel: 已含 ma5/ma10/rsi/ret1 的板块个股面板。每个交易日聚合成一行。"""
+    rows = []
+    for date, g in panel.groupby("date", sort=True):
+        rows.append({
+            "date": date, "n": len(g),
+            "pct_above_ma10": (g["close"] > g["ma10"]).mean(),
+            "pct_above_ma5": (g["close"] > g["ma5"]).mean(),
+            "pct_rsi_lt40": (g["rsi"] < 40).mean(),
+            "pct_up": (g["ret1"] > 0).mean(),
+        })
+    return pd.DataFrame(rows).sort_values("date").reset_index(drop=True)
+
+
+def finalize_breadth(bs: pd.DataFrame) -> pd.DataFrame:
+    """Sort and derive the day-over-day column (needed by 高位衰竭型)."""
+    bs = bs.sort_values("date").reset_index(drop=True)
+    bs["pct_above_ma5_prev"] = bs["pct_above_ma5"].shift(1)
+    return bs
+
+
+def merge_board(idx: pd.DataFrame, breadth: pd.DataFrame) -> pd.DataFrame:
+    keep = ["date", "close", "ret", "ma5", "ma10", "rsi", "K", "D", "macd", "macd_prev",
+            "vol", "vol_avg5", "max10", "drawdown10"]
+    m = breadth.merge(idx[keep].rename(columns={"close": "idx_close", "ret": "idx_ret"}),
+                      on="date", how="inner")
+    return m.sort_values("date").reset_index(drop=True)
+
+
+# ---- 规则（返回：每个条件的布尔 + 综合）-----------------------------------
+def _b(x):
+    return bool(x) if not pd.isna(x) else False
+
+
+def chinext_signals(r):
+    """r: 合并后某一行(Series)。返回 dict：筑底、大跌(内部断裂/高位衰竭) 的条件明细。"""
+    bottom = [
+        ("创业板指收盘 < MA5 且 < MA10", _b(r.idx_close < r.ma5 and r.idx_close < r.ma10)),
+        ("当日跌幅 ≤ -2%", _b(r.idx_ret <= -0.02)),
+        ("成交量 ≥ 前5日均量", _b(r.vol >= r.vol_avg5)),
+        ("站上MA10个股占比 ≤ 15%", _b(r.pct_above_ma10 <= 0.15)),
+        ("RSI<40个股占比 ≥ 60%", _b(r.pct_rsi_lt40 >= 0.60)),
+        ("10日高点回撤 ≤ 10%", _b(r.drawdown10 <= 0.10)),
+    ]
+    internal = [
+        ("创业板指仍在MA10上方", _b(r.idx_close > r.ma10)),
+        ("MACD较前一日走弱", _b(r.macd < r.macd_prev)),
+        ("KDJ K < D", _b(r.K < r.D)),
+        ("站上MA10个股占比 ≤ 20%", _b(r.pct_above_ma10 <= 0.20)),
+        ("当日上涨个股占比 ≤ 30%", _b(r.pct_up <= 0.30)),
+    ]
+    exhaust = [
+        ("创业板指仍在MA10上方", _b(r.idx_close > r.ma10)),
+        ("RSI ≥ 65", _b(r.rsi >= 65)),
+        ("KDJ K ≥ 80", _b(r.K >= 80)),
+        ("成交量 ≥ 前5日均量1.15倍", _b(r.vol >= 1.15 * r.vol_avg5)),
+        ("站上MA5个股占比较前一日下降", _b(r.pct_above_ma5 < r.pct_above_ma5_prev)),
+    ]
+    return {
+        "bottoming": {"label": "创业板筑底提醒", "conds": bottom, "ok": all(x for _, x in bottom)},
+        "crash": {"label": "创业板大跌预警", "types": [
+            {"name": "内部断裂型", "conds": internal, "ok": all(x for _, x in internal)},
+            {"name": "高位衰竭型", "conds": exhaust, "ok": all(x for _, x in exhaust)},
+        ]},
+    }
+
+
+def star_signals(r):
+    bottom = [
+        ("成交量 ÷ 前5日均量 ≥ 1", _b(r.vol >= r.vol_avg5)),
+        ("站上MA10个股占比 ≤ 20%", _b(r.pct_above_ma10 <= 0.20)),
+        ("RSI<40个股占比 ≥ 45%", _b(r.pct_rsi_lt40 >= 0.45)),
+        ("10日高点回撤 ≤ 10%", _b(r.drawdown10 <= 0.10)),
+    ]
+    crash = [
+        ("科创综指仍高于MA10", _b(r.idx_close > r.ma10)),
+        ("RSI ≥ 62", _b(r.rsi >= 62)),
+        ("MACD为正且衰减至0–10且较前一日下降", _b(0 <= r.macd <= 10 and r.macd < r.macd_prev)),
+        ("KDJ K < D", _b(r.K < r.D)),
+        ("站上MA10个股占比 ≤ 50%", _b(r.pct_above_ma10 <= 0.50)),
+        ("当日上涨个股占比 ≤ 35%", _b(r.pct_up <= 0.35)),
+    ]
+    return {
+        "bottoming": {"label": "科创板筑底提醒", "conds": bottom, "ok": all(x for _, x in bottom)},
+        "crash": {"label": "科创板大跌预警", "types": [
+            {"name": "衰竭型", "conds": crash, "ok": all(x for _, x in crash)},
+        ]},
+    }
+
+
+RULE_FN = {"chinext": chinext_signals, "star": star_signals}
+
+
+STOCK_BREADTH_COLS = ["date", "n", "pct_above_ma10", "pct_above_ma5", "pct_rsi_lt40", "pct_up"]
+
+
+def fetch_index_row(cfg, date, stored_index=None):
+    """Return today's index OHLCV row {date,high,low,close,volume} for `date`.
+
+    Prefers EOD; if EOD still lags (after-close) cross-checks a realtime Sina quote
+    (昨收 == prev EOD close); finally falls back to a stored index_history row
+    (covers replay / already-have)."""
+    import datetime
+    import akshare as ak
+    try:
+        d = ak.stock_zh_index_daily(symbol=cfg["index_eod"])
+        d["date"] = d["date"].astype(str).str[:10]
+        last = d.iloc[-1]
+        if str(last["date"]) == date:
+            return {"date": date, "high": float(last["high"]), "low": float(last["low"]),
+                    "close": float(last["close"]), "volume": float(last["volume"])}
+        bj = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=8)))
+        closed = (bj.hour * 60 + bj.minute) >= 15 * 60 + 5
+        if closed and str(last["date"]) < date:
+            s = ak.stock_zh_index_spot_sina()
+            r = s[s["代码"].astype(str).str.contains(cfg["index_sina"])].iloc[0]
+            if abs(float(r["昨收"]) - float(last["close"])) < max(0.1, float(last["close"]) * 1e-4):
+                return {"date": date, "high": float(r["最高"]), "low": float(r["最低"]),
+                        "close": float(r["最新价"]), "volume": float(r["成交量"])}
+    except Exception as e:  # noqa: BLE001
+        print(f"  [{cfg['id']}] index fetch failed: {type(e).__name__}")
+    if stored_index is not None:
+        hit = stored_index[stored_index["date"] == date]
+        if len(hit):
+            r = hit.iloc[0]
+            return {"date": date, "high": float(r["high"]), "low": float(r["low"]),
+                    "close": float(r["close"]), "volume": float(r["volume"])}
+    return None
+
+
+def evaluate(board_id, merged: pd.DataFrame):
+    """返回逐日 signal 列表（每行含 bottoming/crash 明细）。"""
+    fn = RULE_FN[board_id]
+    out = []
+    for _, r in merged.iterrows():
+        sig = fn(r)
+        crash_any = any(t["ok"] for t in sig["crash"]["types"])
+        out.append({
+            "date": r["date"],
+            "idx_close": None if pd.isna(r["idx_close"]) else round(float(r["idx_close"]), 2),
+            "idx_ret": None if pd.isna(r["idx_ret"]) else round(float(r["idx_ret"]) * 100, 2),
+            "pct_above_ma10": round(float(r["pct_above_ma10"]) * 100, 1),
+            "pct_above_ma5": round(float(r["pct_above_ma5"]) * 100, 1),
+            "pct_rsi_lt40": round(float(r["pct_rsi_lt40"]) * 100, 1),
+            "pct_up": round(float(r["pct_up"]) * 100, 1),
+            "n": int(r["n"]),
+            "bottoming": sig["bottoming"]["ok"],
+            "crash": crash_any,
+            "detail": sig,
+        })
+    return out
+
+
+def dump_signals(outdir, cfg, hist):
+    """Write a lean signals.json: full condition detail only on the latest day;
+    history rows keep just the display metrics (keeps the committed file small)."""
+    import json
+    lean = [{k: v for k, v in h.items() if k != "detail"} for h in hist]
+    out = {
+        "updated": pd.Timestamp.now(tz="Asia/Shanghai").strftime("%Y-%m-%d %H:%M"),
+        "board": {k: cfg[k] for k in ("id", "name", "index_name", "index_eod")},
+        "latest_date": hist[-1]["date"], "latest": hist[-1], "history": lean,
+    }
+    with open(os.path.join(outdir, "signals.json"), "w", encoding="utf-8") as f:
+        json.dump(out, f, ensure_ascii=False, indent=1)
+
+
+def update_board(board_id, date, panel_all, data_root):
+    """增量更新单个板块：用已算好指标的全市场面板 panel_all(含 date 当日) + 抓板块指数。
+    读写 data/<board>/{breadth_stock.csv, index_history.csv}，产出 signals.json。返回 latest。"""
+    cfg = BOARDS[board_id]
+    outdir = os.path.join(data_root, board_id)
+
+    # 1) 当日板块个股宽度
+    sub = panel_all[panel_all["code"].astype(str).str.startswith(cfg["prefixes"])]
+    today = board_breadth(sub[sub["date"] == date])
+    if today.empty:
+        raise RuntimeError(f"[{board_id}] no board stocks for {date}")
+    bs = pd.read_csv(os.path.join(outdir, "breadth_stock.csv"))
+    bs["date"] = bs["date"].astype(str)
+    bs = bs[bs["date"] != date]
+    bs = pd.concat([bs[STOCK_BREADTH_COLS], today[STOCK_BREADTH_COLS]], ignore_index=True)
+    bs.to_csv(os.path.join(outdir, "breadth_stock.csv"), index=False, encoding="utf-8-sig")
+
+    # 2) 板块指数当日行情
+    ih = pd.read_csv(os.path.join(outdir, "index_history.csv"))
+    ih["date"] = ih["date"].astype(str)
+    row = fetch_index_row(cfg, date, stored_index=ih)
+    if row is None:
+        raise RuntimeError(f"[{board_id}] cannot get index {cfg['index_eod']} for {date}")
+    ih = ih[ih["date"] != date]
+    ih = pd.concat([ih, pd.DataFrame([row])], ignore_index=True).sort_values("date").reset_index(drop=True)
+    ih.to_csv(os.path.join(outdir, "index_history.csv"), index=False, encoding="utf-8-sig")
+
+    # 3) 合并 -> 评估 -> 落盘
+    merged = merge_board(index_indicators(ih), finalize_breadth(bs))
+    merged = merged[merged["idx_close"].notna()].reset_index(drop=True)
+    merged.to_csv(os.path.join(outdir, "breadth_daily.csv"), index=False, encoding="utf-8-sig")
+    hist = evaluate(board_id, merged)
+    dump_signals(outdir, cfg, hist)
+    return hist[-1]
+
+
+def update_all(date, panel_all, data_root):
+    res = {}
+    for bid in BOARDS:
+        try:
+            res[bid] = update_board(bid, date, panel_all, data_root)
+        except Exception as e:  # noqa: BLE001
+            print(f"  [{bid}] 更新失败(跳过): {type(e).__name__}: {e}")
+    return res
