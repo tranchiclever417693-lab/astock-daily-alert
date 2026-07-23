@@ -72,9 +72,16 @@ h1{font-size:21px;margin:0;letter-spacing:.5px}
 .typ .tname{font-size:12px;color:var(--sub);margin-bottom:6px;display:flex;justify-content:space-between}
 .typ .tname .tf{font-weight:700}
 .cond{list-style:none;padding:0;margin:0}
-.cond li{display:flex;gap:9px;align-items:flex-start;padding:4px 0;font-size:12.5px}
+.cond li{display:flex;justify-content:space-between;gap:10px;align-items:baseline;
+  padding:6px 0;font-size:12.5px;border-top:1px solid var(--line)}
+.cond li:first-child{border-top:none}
+.cl{display:flex;gap:8px;align-items:baseline;min-width:0}
 .mk{font-family:var(--mono);font-weight:700;flex:none;width:14px}
 .yes{color:var(--green)} .no{color:var(--sub)}
+.cur{font-family:var(--mono);font-size:11.5px;padding:1px 8px;border-radius:6px;flex:none;
+  text-align:right;background:var(--panel2);color:var(--sub)}
+.cur.ok{color:var(--green);background:var(--greenbg)}
+.cur.bad{color:var(--amber);background:var(--amberbg)}
 .section{margin-top:28px}
 .section h3{font-size:13px;color:var(--sub);letter-spacing:1px;margin:0 0 12px;font-weight:600}
 .hint{color:var(--sub);font-weight:400;font-size:11.5px;letter-spacing:0}
@@ -154,9 +161,13 @@ $('#idxline').innerHTML = BRD.index_name+' <b>'+(L.idx_close??'-')+'</b> &nbsp; 
   const st=$('#botStatus');
   st.className='status '+(bt.ok?'on-amber':'on-neutral');
   $('#botText').textContent=bt.ok?'触发':'未触发';
-  $('#botCond').innerHTML=bt.conds.map(([lab,ok])=>
-    `<li><span class="mk ${ok?'yes':'no'}">${ok?'✓':'·'}</span><span>${lab}</span></li>`).join('');
+  $('#botCond').innerHTML=bt.conds.map(condLi).join('');
 })();
+
+function condLi([lab,ok,cur]){
+  return `<li><span class="cl"><span class="mk ${ok?'yes':'no'}">${ok?'✓':'·'}</span><span>${lab}</span></span>`+
+    `<span class="cur ${ok?'ok':'bad'}">${cur??''}</span></li>`;
+}
 
 /* crash card (风险 -> 触发用红色) */
 (function(){
@@ -168,8 +179,7 @@ $('#idxline').innerHTML = BRD.index_name+' <b>'+(L.idx_close??'-')+'</b> &nbsp; 
   $('#crashTypes').innerHTML=cr.types.map(t=>`
     <div class="typ"><div class="tname"><span>${t.name}</span>
       <span class="tf ${t.ok?'on-red':''}" style="color:${t.ok?'var(--red)':'var(--sub)'}">${t.ok?'满足':'未满足'}</span></div>
-      <ul class="cond">${t.conds.map(([lab,ok])=>
-        `<li><span class="mk ${ok?'yes':'no'}">${ok?'✓':'·'}</span><span>${lab}</span></li>`).join('')}</ul></div>`).join('');
+      <ul class="cond">${t.conds.map(condLi).join('')}</ul></div>`).join('');
 })();
 
 /* history */

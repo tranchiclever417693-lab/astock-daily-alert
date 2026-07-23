@@ -99,58 +99,79 @@ def _b(x):
     return bool(x) if not pd.isna(x) else False
 
 
+def _n(x, fmt="{:.1f}"):
+    return "—" if pd.isna(x) else fmt.format(x)
+
+
+def _pct(x):
+    return "—" if pd.isna(x) else f"{x * 100:.1f}%"
+
+
+def _ratio(a, b):
+    return "—" if (pd.isna(a) or pd.isna(b) or b == 0) else f"{a / b:.2f}"
+
+
+def _allok(conds):
+    return all(c[1] for c in conds)
+
+
 def chinext_signals(r):
-    """r: 合并后某一行(Series)。返回 dict：筑底、大跌(内部断裂/高位衰竭) 的条件明细。"""
+    """r: 合并后某一行(Series)。每个条件 = (标签, 是否满足, 当前值字符串)。"""
+    px = f"收盘 {_n(r.idx_close)} · MA10 {_n(r.ma10)}"
     bottom = [
-        ("创业板指收盘 < MA5 且 < MA10", _b(r.idx_close < r.ma5 and r.idx_close < r.ma10)),
-        ("当日跌幅 ≤ -2%", _b(r.idx_ret <= -0.02)),
-        ("成交量 ≥ 前5日均量", _b(r.vol >= r.vol_avg5)),
-        ("站上MA10个股占比 ≤ 15%", _b(r.pct_above_ma10 <= 0.15)),
-        ("RSI<40个股占比 ≥ 60%", _b(r.pct_rsi_lt40 >= 0.60)),
-        ("10日高点回撤 ≤ 10%", _b(r.drawdown10 <= 0.10)),
+        ("创业板指收盘 < MA5 且 < MA10", _b(r.idx_close < r.ma5 and r.idx_close < r.ma10),
+         f"收盘 {_n(r.idx_close)} · MA5 {_n(r.ma5)} · MA10 {_n(r.ma10)}"),
+        ("当日跌幅 ≤ -2%", _b(r.idx_ret <= -0.02), _n(r.idx_ret * 100, "{:+.2f}%")),
+        ("成交量 ≥ 前5日均量", _b(r.vol >= r.vol_avg5), f"量比 {_ratio(r.vol, r.vol_avg5)}"),
+        ("站上MA10个股占比 ≤ 15%", _b(r.pct_above_ma10 <= 0.15), _pct(r.pct_above_ma10)),
+        ("RSI<40个股占比 ≥ 60%", _b(r.pct_rsi_lt40 >= 0.60), _pct(r.pct_rsi_lt40)),
+        ("10日高点回撤 ≤ 10%", _b(r.drawdown10 <= 0.10), _pct(r.drawdown10)),
     ]
     internal = [
-        ("创业板指仍在MA10上方", _b(r.idx_close > r.ma10)),
-        ("MACD较前一日走弱", _b(r.macd < r.macd_prev)),
-        ("KDJ K < D", _b(r.K < r.D)),
-        ("站上MA10个股占比 ≤ 20%", _b(r.pct_above_ma10 <= 0.20)),
-        ("当日上涨个股占比 ≤ 30%", _b(r.pct_up <= 0.30)),
+        ("创业板指仍在MA10上方", _b(r.idx_close > r.ma10), px),
+        ("MACD较前一日走弱", _b(r.macd < r.macd_prev), f"MACD {_n(r.macd)}（前 {_n(r.macd_prev)}）"),
+        ("KDJ K < D", _b(r.K < r.D), f"K {_n(r.K)} · D {_n(r.D)}"),
+        ("站上MA10个股占比 ≤ 20%", _b(r.pct_above_ma10 <= 0.20), _pct(r.pct_above_ma10)),
+        ("当日上涨个股占比 ≤ 30%", _b(r.pct_up <= 0.30), _pct(r.pct_up)),
     ]
     exhaust = [
-        ("创业板指仍在MA10上方", _b(r.idx_close > r.ma10)),
-        ("RSI ≥ 65", _b(r.rsi >= 65)),
-        ("KDJ K ≥ 80", _b(r.K >= 80)),
-        ("成交量 ≥ 前5日均量1.15倍", _b(r.vol >= 1.15 * r.vol_avg5)),
-        ("站上MA5个股占比较前一日下降", _b(r.pct_above_ma5 < r.pct_above_ma5_prev)),
+        ("创业板指仍在MA10上方", _b(r.idx_close > r.ma10), px),
+        ("RSI ≥ 65", _b(r.rsi >= 65), f"RSI {_n(r.rsi)}"),
+        ("KDJ K ≥ 80", _b(r.K >= 80), f"K {_n(r.K)}"),
+        ("成交量 ≥ 前5日均量1.15倍", _b(r.vol >= 1.15 * r.vol_avg5), f"量比 {_ratio(r.vol, r.vol_avg5)}"),
+        ("站上MA5个股占比较前一日下降", _b(r.pct_above_ma5 < r.pct_above_ma5_prev),
+         f"今 {_pct(r.pct_above_ma5)} · 昨 {_pct(r.pct_above_ma5_prev)}"),
     ]
     return {
-        "bottoming": {"label": "创业板筑底提醒", "conds": bottom, "ok": all(x for _, x in bottom)},
+        "bottoming": {"label": "创业板筑底提醒", "conds": bottom, "ok": _allok(bottom)},
         "crash": {"label": "创业板大跌预警", "types": [
-            {"name": "内部断裂型", "conds": internal, "ok": all(x for _, x in internal)},
-            {"name": "高位衰竭型", "conds": exhaust, "ok": all(x for _, x in exhaust)},
+            {"name": "内部断裂型", "conds": internal, "ok": _allok(internal)},
+            {"name": "高位衰竭型", "conds": exhaust, "ok": _allok(exhaust)},
         ]},
     }
 
 
 def star_signals(r):
+    px = f"收盘 {_n(r.idx_close)} · MA10 {_n(r.ma10)}"
     bottom = [
-        ("成交量 ÷ 前5日均量 ≥ 1", _b(r.vol >= r.vol_avg5)),
-        ("站上MA10个股占比 ≤ 20%", _b(r.pct_above_ma10 <= 0.20)),
-        ("RSI<40个股占比 ≥ 45%", _b(r.pct_rsi_lt40 >= 0.45)),
-        ("10日高点回撤 ≤ 10%", _b(r.drawdown10 <= 0.10)),
+        ("成交量 ÷ 前5日均量 ≥ 1", _b(r.vol >= r.vol_avg5), f"量比 {_ratio(r.vol, r.vol_avg5)}"),
+        ("站上MA10个股占比 ≤ 20%", _b(r.pct_above_ma10 <= 0.20), _pct(r.pct_above_ma10)),
+        ("RSI<40个股占比 ≥ 45%", _b(r.pct_rsi_lt40 >= 0.45), _pct(r.pct_rsi_lt40)),
+        ("10日高点回撤 ≤ 10%", _b(r.drawdown10 <= 0.10), _pct(r.drawdown10)),
     ]
     crash = [
-        ("科创综指仍高于MA10", _b(r.idx_close > r.ma10)),
-        ("RSI ≥ 62", _b(r.rsi >= 62)),
-        ("MACD为正且衰减至0–10且较前一日下降", _b(0 <= r.macd <= 10 and r.macd < r.macd_prev)),
-        ("KDJ K < D", _b(r.K < r.D)),
-        ("站上MA10个股占比 ≤ 50%", _b(r.pct_above_ma10 <= 0.50)),
-        ("当日上涨个股占比 ≤ 35%", _b(r.pct_up <= 0.35)),
+        ("科创综指仍高于MA10", _b(r.idx_close > r.ma10), px),
+        ("RSI ≥ 62", _b(r.rsi >= 62), f"RSI {_n(r.rsi)}"),
+        ("MACD为正且衰减至0–10且较前一日下降",
+         _b(0 <= r.macd <= 10 and r.macd < r.macd_prev), f"MACD {_n(r.macd)}（前 {_n(r.macd_prev)}）"),
+        ("KDJ K < D", _b(r.K < r.D), f"K {_n(r.K)} · D {_n(r.D)}"),
+        ("站上MA10个股占比 ≤ 50%", _b(r.pct_above_ma10 <= 0.50), _pct(r.pct_above_ma10)),
+        ("当日上涨个股占比 ≤ 35%", _b(r.pct_up <= 0.35), _pct(r.pct_up)),
     ]
     return {
-        "bottoming": {"label": "科创板筑底提醒", "conds": bottom, "ok": all(x for _, x in bottom)},
+        "bottoming": {"label": "科创板筑底提醒", "conds": bottom, "ok": _allok(bottom)},
         "crash": {"label": "科创板大跌预警", "types": [
-            {"name": "衰竭型", "conds": crash, "ok": all(x for _, x in crash)},
+            {"name": "衰竭型", "conds": crash, "ok": _allok(crash)},
         ]},
     }
 
