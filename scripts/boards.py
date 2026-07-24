@@ -66,6 +66,12 @@ def index_indicators(df: pd.DataFrame) -> pd.DataFrame:
     g["vol_avg5"] = v.shift(1).rolling(5).mean()
     g["max10"] = c.rolling(10).max()                    # 近10日(含当日)最高收盘
     g["drawdown10"] = (g["max10"] - c) / g["max10"]     # 相对10日高点回撤
+    g["dev10"] = c / g["ma10"] - 1.0                    # 相对MA10乖离（科创板深跌急杀底用）
+    # 预警区：近4日内(含当日)曾出现 dev10 ≤ −5%
+    g["warn_arm"] = (g["dev10"] <= -0.05).astype(int).rolling(4, min_periods=1).max() > 0
+    # 科创板 L2 核心买点：预警区 + MACD柱见谷回升 + KDJ-K勾头向上；仅在首次成立当日发出
+    l2_raw = g["warn_arm"] & (g["macd"] > g["macd_prev"]) & (g["K"] > g["K_prev"])
+    g["l2_first"] = l2_raw & ~l2_raw.shift(1, fill_value=False)
     return g
 
 
@@ -94,7 +100,7 @@ def finalize_breadth(bs: pd.DataFrame) -> pd.DataFrame:
 def merge_board(idx: pd.DataFrame, breadth: pd.DataFrame) -> pd.DataFrame:
     keep = ["date", "close", "ret", "ma5", "ma10", "rsi", "K", "D", "macd", "macd_prev",
             "vol", "vol_avg5", "max10", "drawdown10",
-            "J", "K_prev", "D_prev", "oversold_recent"]
+            "J", "K_prev", "D_prev", "oversold_recent", "dev10", "warn_arm", "l2_first"]
     m = breadth.merge(idx[keep].rename(columns={"close": "idx_close", "ret": "idx_ret"}),
                       on="date", how="inner")
     return m.sort_values("date").reset_index(drop=True)
@@ -165,12 +171,26 @@ def chinext_signals(r):
 
 
 def star_signals(r):
+    """科创综指「深跌急杀底」抄底信号（三层递进）：
+    L1 预警(备战) → L2 确认(核心买点，三条件同时成立→建首仓40-50%) → L3 深超卖(加仓至70-100%)。
+    页面「筑底提醒」= L2 核心买点；L3 深超卖加仓作为加分项展示。指标口径同工作簿。"""
     px = f"收盘 {_n(r.idx_close)} · MA10 {_n(r.ma10)}"
+    # L2 核心买点：① 处于预警区(近4日曾 dev10≤−5%) ② MACD柱见谷回升 ③ KDJ-K勾头向上；
+    # ④ 首次确认（避免在同一波确认后连日追高，只在起涨首日建首仓）
     bottom = [
-        ("成交量 ÷ 前5日均量 ≥ 1", _b(r.vol >= r.vol_avg5), f"量比 {_ratio(r.vol, r.vol_avg5)}"),
-        ("站上MA10个股占比 ≤ 20%", _b(r.pct_above_ma10 <= 0.20), _pct(r.pct_above_ma10)),
-        ("RSI<40个股占比 ≥ 45%", _b(r.pct_rsi_lt40 >= 0.45), _pct(r.pct_rsi_lt40)),
-        ("10日高点回撤 ≤ 10%", _b(r.drawdown10 <= 0.10), _pct(r.drawdown10)),
+        ("① 处于预警区（近4日曾 收盘/MA10−1 ≤ −5%）", _b(r.warn_arm),
+         f"dev10 {_n(r.dev10 * 100, '{:+.1f}')}%"),
+        ("② MACD柱见谷回升（今柱 > 昨柱）", _b(r.macd > r.macd_prev),
+         f"MACD {_n(r.macd)}（昨 {_n(r.macd_prev)}）"),
+        ("③ KDJ-K勾头向上（今K > 昨K）", _b(r.K > r.K_prev),
+         f"K {_n(r.K)}（昨 {_n(r.K_prev)}）"),
+        ("④ 首次确认（昨日未同时成立，起涨首日建首仓40–50%）", _b(r.l2_first),
+         "首次确认" if _b(r.l2_first) else "—"),
+    ]
+    # 加分项：L3 深超卖 → 决定加仓力度（非硬性买点条件）
+    extras = [
+        ("深超卖·加仓（RSI<35 且 K<20 → 仓位加至70–100%）", _b(r.rsi < 35 and r.K < 20),
+         f"RSI {_n(r.rsi)} · K {_n(r.K)}"),
     ]
     crash = [
         ("科创综指仍高于MA10", _b(r.idx_close > r.ma10), px),
@@ -182,7 +202,8 @@ def star_signals(r):
         ("当日上涨个股占比 ≤ 35%", _b(r.pct_up <= 0.35), _pct(r.pct_up)),
     ]
     return {
-        "bottoming": {"label": "科创板筑底提醒", "conds": bottom, "ok": _allok(bottom)},
+        "bottoming": {"label": "科创板筑底提醒（深跌急杀底·L2核心买点）",
+                      "conds": bottom, "extras": extras, "ok": _allok(bottom)},
         "crash": {"label": "科创板大跌预警", "types": [
             {"name": "衰竭型", "conds": crash, "ok": _allok(crash)},
         ]},

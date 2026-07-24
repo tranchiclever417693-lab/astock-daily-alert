@@ -1,5 +1,5 @@
 {
- "updated": "2026-07-23 15:14",
+ "updated": "2026-07-24 11:07",
  "board": {
   "id": "star",
   "name": "科创板风险预警",
@@ -20,27 +20,34 @@
   "crash": false,
   "detail": {
    "bottoming": {
-    "label": "科创板筑底提醒",
+    "label": "科创板筑底提醒（深跌急杀底·L2核心买点）",
     "conds": [
      [
-      "成交量 ÷ 前5日均量 ≥ 1",
-      false,
-      "量比 0.01"
-     ],
-     [
-      "站上MA10个股占比 ≤ 20%",
+      "① 处于预警区（近4日曾 收盘/MA10−1 ≤ −5%）",
       true,
-      "14.1%"
+      "dev10 -6.7%"
      ],
      [
-      "RSI<40个股占比 ≥ 45%",
+      "② MACD柱见谷回升（今柱 > 昨柱）",
       true,
-      "67.9%"
+      "MACD -95.1（昨 -99.3）"
      ],
      [
-      "10日高点回撤 ≤ 10%",
+      "③ KDJ-K勾头向上（今K > 昨K）",
+      true,
+      "K 24.3（昨 22.7）"
+     ],
+     [
+      "④ 首次确认（昨日未同时成立，起涨首日建首仓40–50%）",
       false,
-      "16.5%"
+      "—"
+     ]
+    ],
+    "extras": [
+     [
+      "深超卖·加仓（RSI<35 且 K<20 → 仓位加至70–100%）",
+      false,
+      "RSI 38.7 · K 24.3"
      ]
     ],
     "ok": false
@@ -2042,7 +2049,7 @@
    "pct_rsi_lt40": 14.5,
    "pct_up": 90.3,
    "n": 588,
-   "bottoming": false,
+   "bottoming": true,
    "crash": false
   },
   {
@@ -2318,7 +2325,7 @@
    "pct_rsi_lt40": 69.9,
    "pct_up": 5.6,
    "n": 592,
-   "bottoming": true,
+   "bottoming": false,
    "crash": false
   },
   {
@@ -2342,7 +2349,7 @@
    "pct_rsi_lt40": 33.8,
    "pct_up": 82.3,
    "n": 589,
-   "bottoming": false,
+   "bottoming": true,
    "crash": false
   },
   {
@@ -3242,7 +3249,7 @@
    "pct_rsi_lt40": 59.4,
    "pct_up": 15.3,
    "n": 601,
-   "bottoming": true,
+   "bottoming": false,
    "crash": false
   },
   {
@@ -3266,7 +3273,7 @@
    "pct_rsi_lt40": 59.6,
    "pct_up": 92.7,
    "n": 601,
-   "bottoming": false,
+   "bottoming": true,
    "crash": false
   },
   {
@@ -3830,7 +3837,7 @@
    "pct_rsi_lt40": 48.7,
    "pct_up": 44.1,
    "n": 608,
-   "bottoming": false,
+   "bottoming": true,
    "crash": false
   },
   {
@@ -3854,7 +3861,7 @@
    "pct_rsi_lt40": 46.2,
    "pct_up": 48.0,
    "n": 608,
-   "bottoming": true,
+   "bottoming": false,
    "crash": false
   },
   {
@@ -3878,7 +3885,7 @@
    "pct_rsi_lt40": 46.4,
    "pct_up": 75.8,
    "n": 608,
-   "bottoming": false,
+   "bottoming": true,
    "crash": false
   },
   {
@@ -4226,7 +4233,7 @@
    "pct_rsi_lt40": 65.1,
    "pct_up": 77.2,
    "n": 610,
-   "bottoming": false,
+   "bottoming": true,
    "crash": false
   },
   {
