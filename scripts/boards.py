@@ -52,6 +52,11 @@ def index_indicators(df: pd.DataFrame) -> pd.DataFrame:
     rsv = (c - low9) / (high9 - low9).replace(0, np.nan) * 100
     g["K"] = rsv.ewm(alpha=1 / 3, adjust=False).mean()
     g["D"] = g["K"].ewm(alpha=1 / 3, adjust=False).mean()
+    g["J"] = 3 * g["K"] - 2 * g["D"]                    # 最灵敏的超卖预警
+    g["K_prev"], g["D_prev"] = g["K"].shift(1), g["D"].shift(1)  # 金叉判定（昨日 K≤D）
+    # 近6日曾超卖：当日或前1~6个交易日内出现过 J<0 或 K<20（窗口=今日+前6日）
+    oversold = ((g["J"] < 0) | (g["K"] < 20)).astype(int)
+    g["oversold_recent"] = oversold.rolling(7, min_periods=1).max() > 0
     # MACD 12,26,9 —— 柱 = 2*(DIF-DEA)（红绿柱）
     dif = c.ewm(span=12, adjust=False).mean() - c.ewm(span=26, adjust=False).mean()
     dea = dif.ewm(span=9, adjust=False).mean()
@@ -88,7 +93,8 @@ def finalize_breadth(bs: pd.DataFrame) -> pd.DataFrame:
 
 def merge_board(idx: pd.DataFrame, breadth: pd.DataFrame) -> pd.DataFrame:
     keep = ["date", "close", "ret", "ma5", "ma10", "rsi", "K", "D", "macd", "macd_prev",
-            "vol", "vol_avg5", "max10", "drawdown10"]
+            "vol", "vol_avg5", "max10", "drawdown10",
+            "J", "K_prev", "D_prev", "oversold_recent"]
     m = breadth.merge(idx[keep].rename(columns={"close": "idx_close", "ret": "idx_ret"}),
                       on="date", how="inner")
     return m.sort_values("date").reset_index(drop=True)
@@ -116,16 +122,22 @@ def _allok(conds):
 
 
 def chinext_signals(r):
-    """r: 合并后某一行(Series)。每个条件 = (标签, 是否满足, 当前值字符串)。"""
+    """r: 合并后某一行(Series)。每个条件 = (标签, 是否满足, 当前值字符串)。
+
+    筑底提醒 = KDJ超卖金叉 + MA5趋势确认「三重滤网」（创业板指底部买入策略）：
+    三个条件同一天同时成立才发出买入信号；量能/J值前置为非硬性加分项。"""
     px = f"收盘 {_n(r.idx_close)} · MA10 {_n(r.ma10)}"
+    golden_cross = _b(r.K > r.D and r.K_prev <= r.D_prev)
     bottom = [
-        ("创业板指收盘 < MA5 且 < MA10", _b(r.idx_close < r.ma5 and r.idx_close < r.ma10),
-         f"收盘 {_n(r.idx_close)} · MA5 {_n(r.ma5)} · MA10 {_n(r.ma10)}"),
-        ("当日跌幅 ≤ -2%", _b(r.idx_ret <= -0.02), _n(r.idx_ret * 100, "{:+.2f}%")),
-        ("成交量 ≥ 前5日均量", _b(r.vol >= r.vol_avg5), f"量比 {_ratio(r.vol, r.vol_avg5)}"),
-        ("站上MA10个股占比 ≤ 15%", _b(r.pct_above_ma10 <= 0.15), _pct(r.pct_above_ma10)),
-        ("RSI<40个股占比 ≥ 60%", _b(r.pct_rsi_lt40 >= 0.60), _pct(r.pct_rsi_lt40)),
-        ("10日高点回撤 ≤ 10%", _b(r.drawdown10 <= 0.10), _pct(r.drawdown10)),
+        ("① KDJ金叉（当日K>D 且 昨日K≤D）", golden_cross,
+         f"今 K{_n(r.K)}/D{_n(r.D)} · 昨 K{_n(r.K_prev)}/D{_n(r.D_prev)}"),
+        ("② 近6日曾超卖（J<0 或 K<20）", _b(r.oversold_recent), f"J {_n(r.J)} · K {_n(r.K)}"),
+        ("③ 收盘站上MA5", _b(r.idx_close > r.ma5), f"收盘 {_n(r.idx_close)} · MA5 {_n(r.ma5)}"),
+    ]
+    # 加分项（不作硬性条件，仅供参考）
+    extras = [
+        ("量能温和放大（金叉日量比 > 1.0）", _b(r.vol > r.vol_avg5), f"量比 {_ratio(r.vol, r.vol_avg5)}"),
+        ("J<0 左侧试探预警（可先建试探仓）", _b(r.J < 0), f"J {_n(r.J)}"),
     ]
     internal = [
         ("创业板指仍在MA10上方", _b(r.idx_close > r.ma10), px),
@@ -143,7 +155,8 @@ def chinext_signals(r):
          f"今 {_pct(r.pct_above_ma5)} · 昨 {_pct(r.pct_above_ma5_prev)}"),
     ]
     return {
-        "bottoming": {"label": "创业板筑底提醒", "conds": bottom, "ok": _allok(bottom)},
+        "bottoming": {"label": "创业板筑底提醒（KDJ超卖金叉·三重滤网）",
+                      "conds": bottom, "extras": extras, "ok": _allok(bottom)},
         "crash": {"label": "创业板大跌预警", "types": [
             {"name": "内部断裂型", "conds": internal, "ok": _allok(internal)},
             {"name": "高位衰竭型", "conds": exhaust, "ok": _allok(exhaust)},

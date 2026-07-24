@@ -1,5 +1,5 @@
 {
- "updated": "2026-07-23 15:13",
+ "updated": "2026-07-24 10:06",
  "board": {
   "id": "chinext",
   "name": "创业板指风险预警",
@@ -20,37 +20,34 @@
   "crash": false,
   "detail": {
    "bottoming": {
-    "label": "创业板筑底提醒",
+    "label": "创业板筑底提醒（KDJ超卖金叉·三重滤网）",
     "conds": [
      [
-      "创业板指收盘 < MA5 且 < MA10",
+      "① KDJ金叉（当日K>D 且 昨日K≤D）",
       false,
-      "收盘 3575.5 · MA5 3540.0 · MA10 3661.4"
+      "今 K32.4/D25.8 · 昨 K27.7/D22.5"
      ],
      [
-      "当日跌幅 ≤ -2%",
-      false,
-      "+0.25%"
+      "② 近6日曾超卖（J<0 或 K<20）",
+      true,
+      "J 45.5 · K 32.4"
      ],
      [
-      "成交量 ≥ 前5日均量",
+      "③ 收盘站上MA5",
+      true,
+      "收盘 3575.5 · MA5 3540.0"
+     ]
+    ],
+    "extras": [
+     [
+      "量能温和放大（金叉日量比 > 1.0）",
       false,
       "量比 0.80"
      ],
      [
-      "站上MA10个股占比 ≤ 15%",
+      "J<0 左侧试探预警（可先建试探仓）",
       false,
-      "21.1%"
-     ],
-     [
-      "RSI<40个股占比 ≥ 60%",
-      true,
-      "62.9%"
-     ],
-     [
-      "10日高点回撤 ≤ 10%",
-      true,
-      "7.2%"
+      "J 45.5"
      ]
     ],
     "ok": false
@@ -962,7 +959,7 @@
    "pct_rsi_lt40": 9.5,
    "pct_up": 72.5,
    "n": 1369,
-   "bottoming": false,
+   "bottoming": true,
    "crash": false
   },
   {
@@ -1130,7 +1127,7 @@
    "pct_rsi_lt40": 5.8,
    "pct_up": 89.1,
    "n": 1371,
-   "bottoming": false,
+   "bottoming": true,
    "crash": false
   },
   {
@@ -2090,7 +2087,7 @@
    "pct_rsi_lt40": 17.2,
    "pct_up": 40.0,
    "n": 1383,
-   "bottoming": false,
+   "bottoming": true,
    "crash": false
   },
   {
@@ -2354,7 +2351,7 @@
    "pct_rsi_lt40": 62.1,
    "pct_up": 8.0,
    "n": 1383,
-   "bottoming": true,
+   "bottoming": false,
    "crash": false
   },
   {
@@ -2390,7 +2387,7 @@
    "pct_rsi_lt40": 33.6,
    "pct_up": 29.5,
    "n": 1382,
-   "bottoming": false,
+   "bottoming": true,
    "crash": false
   },
   {
@@ -3182,7 +3179,7 @@
    "pct_rsi_lt40": 8.8,
    "pct_up": 89.3,
    "n": 1389,
-   "bottoming": false,
+   "bottoming": true,
    "crash": false
   },
   {
@@ -3290,7 +3287,7 @@
    "pct_rsi_lt40": 77.2,
    "pct_up": 5.0,
    "n": 1389,
-   "bottoming": true,
+   "bottoming": false,
    "crash": false
   },
   {
@@ -3422,7 +3419,7 @@
    "pct_rsi_lt40": 3.2,
    "pct_up": 97.0,
    "n": 1389,
-   "bottoming": false,
+   "bottoming": true,
    "crash": false
   },
   {
@@ -3902,7 +3899,7 @@
    "pct_rsi_lt40": 66.7,
    "pct_up": 12.1,
    "n": 1395,
-   "bottoming": true,
+   "bottoming": false,
    "crash": false
   },
   {
@@ -3962,7 +3959,7 @@
    "pct_rsi_lt40": 51.2,
    "pct_up": 78.0,
    "n": 1394,
-   "bottoming": false,
+   "bottoming": true,
    "crash": false
   },
   {
@@ -4262,7 +4259,7 @@
    "pct_rsi_lt40": 68.5,
    "pct_up": 66.1,
    "n": 1397,
-   "bottoming": false,
+   "bottoming": true,
    "crash": false
   },
   {

@@ -83,6 +83,7 @@ footer{margin-top:32px;color:#586173;font-size:11.5px;text-align:center;line-hei
       <div class="status" id="botStatus"><span class="dot"></span><span id="botText"></span></div>
       <div class="sub" style="color:var(--sub);font-size:12px;margin-top:2px">收盘后同时满足全部条件才触发</div>
       <ul class="cond" id="botCond"></ul>
+      <div id="botExtras"></div>
     </div>
     <div class="card" id="crashCard">
       <h2 id="crashH"></h2>
@@ -131,6 +132,10 @@ $('#idxline').innerHTML = BRD.index_name+' <b>'+(L.idx_close??'-')+'</b> &nbsp; 
   st.className='status '+(bt.ok?'on-amber':'on-neutral');
   $('#botText').textContent=bt.ok?'触发':'未触发';
   $('#botCond').innerHTML=bt.conds.map(condLi).join('');
+  if(bt.extras&&bt.extras.length){
+    $('#botExtras').innerHTML='<div class="typ"><div class="tname"><span>加分项（非硬性条件）</span></div>'+
+      '<ul class="cond">'+bt.extras.map(condLi).join('')+'</ul></div>';
+  }
 })();
 
 function condLi([lab,ok,cur]){
@@ -167,7 +172,8 @@ function condLi([lab,ok,cur]){
 (function(){
   const bt=L.detail.bottoming, cr=L.detail.crash;
   const li=a=>a.map(([lab])=>`<li>${lab}</li>`).join('');
-  let h=`<b>${bt.label}</b>（收盘后同时满足全部条件）：<ul>${li(bt.conds)}</ul>`;
+  let h=`<b>${bt.label}</b>（收盘后同时满足以下全部条件才触发）：<ul>${li(bt.conds)}</ul>`;
+  if(bt.extras&&bt.extras.length){ h+=`<div style="margin:4px 0 2px;color:var(--txt)"><b>加分项</b>（不作硬性条件）：</div><ul>${li(bt.extras)}</ul>`; }
   h+=`<b>${cr.label}</b>（任一分型满足即触发）：`;
   cr.types.forEach(t=>{ h+=`<div style="margin:6px 0 2px"><b>${t.name}</b></div><ul>${li(t.conds)}</ul>`; });
   h+=`<div style="margin-top:8px">指标口径：MA简单均线、RSI Wilder14、KDJ 9/3/3、MACD 12/26/9(柱=2×(DIF−DEA))。
