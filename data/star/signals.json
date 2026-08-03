@@ -1,22 +1,22 @@
 {
- "updated": "2026-07-31 21:22",
+ "updated": "2026-08-04 00:45",
  "board": {
   "id": "star",
   "name": "科创板风险预警",
   "index_name": "科创综指",
   "index_eod": "sh000680"
  },
- "latest_date": "2026-07-31",
+ "latest_date": "2026-08-03",
  "latest": {
-  "date": "2026-07-31",
-  "idx_close": 1819.9,
-  "idx_ret": 3.69,
-  "pct_above_ma10": 50.9,
-  "pct_above_ma5": 53.8,
-  "pct_rsi_lt40": 45.7,
-  "pct_up": 92.5,
+  "date": "2026-08-03",
+  "idx_close": 1758.21,
+  "idx_ret": -3.39,
+  "pct_above_ma10": 53.0,
+  "pct_above_ma5": 61.0,
+  "pct_rsi_lt40": 45.3,
+  "pct_up": 54.5,
   "n": 611,
-  "bottoming": true,
+  "bottoming": false,
   "crash": false,
   "detail": {
    "bottoming": {
@@ -25,32 +25,32 @@
      [
       "① 处于预警区（近4日曾 收盘/MA10−1 ≤ −5%）",
       true,
-      "dev10 -5.1%"
+      "dev10 -7.6%"
      ],
      [
       "② MACD柱见谷回升（今柱 > 昨柱）",
       true,
-      "MACD -71.6（昨 -80.9）"
+      "MACD -68.6（昨 -71.6）"
      ],
      [
       "③ KDJ-K勾头向上（今K > 昨K）",
-      true,
-      "K 20.4（昨 18.5）"
+      false,
+      "K 16.0（昨 20.4）"
      ],
      [
       "④ 首次确认（昨日未同时成立，起涨首日建首仓40–50%）",
-      true,
-      "首次确认"
+      false,
+      "—"
      ]
     ],
     "extras": [
      [
       "深超卖·加仓（RSI<35 且 K<20 → 仓位加至70–100%）",
-      false,
-      "RSI 36.4 · K 20.4"
+      true,
+      "RSI 34.0 · K 16.0"
      ]
     ],
-    "ok": true
+    "ok": false
    },
    "crash": {
     "label": "科创板大跌预警",
@@ -61,32 +61,32 @@
        [
         "科创综指仍高于MA10",
         false,
-        "收盘 1819.9 · MA10 1916.9"
+        "收盘 1758.2 · MA10 1903.3"
        ],
        [
         "RSI ≥ 62",
         false,
-        "RSI 36.4"
+        "RSI 34.0"
        ],
        [
         "MACD为正且衰减至0–10且较前一日下降",
         false,
-        "MACD -71.6（前 -80.9）"
+        "MACD -68.6（前 -71.6）"
        ],
        [
         "KDJ K < D",
         true,
-        "K 20.4 · D 22.0"
+        "K 16.0 · D 20.0"
        ],
        [
         "站上MA10个股占比 ≤ 50%",
         false,
-        "50.9%"
+        "53.0%"
        ],
        [
         "当日上涨个股占比 ≤ 35%",
         false,
-        "92.5%"
+        "54.5%"
        ]
       ],
       "ok": false
@@ -4330,6 +4330,18 @@
    "pct_up": 92.5,
    "n": 611,
    "bottoming": true,
+   "crash": false
+  },
+  {
+   "date": "2026-08-03",
+   "idx_close": 1758.21,
+   "idx_ret": -3.39,
+   "pct_above_ma10": 53.0,
+   "pct_above_ma5": 61.0,
+   "pct_rsi_lt40": 45.3,
+   "pct_up": 54.5,
+   "n": 611,
+   "bottoming": false,
    "crash": false
   }
  ]
