@@ -1,20 +1,20 @@
 {
- "updated": "2026-08-29 03:34",
+ "updated": "2026-08-31 23:20",
  "board": {
   "id": "star",
   "name": "科创板风险预警",
   "index_name": "科创综指",
   "index_eod": "sh000680"
  },
- "latest_date": "2026-08-28",
+ "latest_date": "2026-08-31",
  "latest": {
-  "date": "2026-08-28",
-  "idx_close": 1942.9,
-  "idx_ret": -1.57,
-  "pct_above_ma10": 31.2,
-  "pct_above_ma5": 59.2,
-  "pct_rsi_lt40": 8.3,
-  "pct_up": 33.0,
+  "date": "2026-08-31",
+  "idx_close": 1979.75,
+  "idx_ret": 1.9,
+  "pct_above_ma10": 51.1,
+  "pct_above_ma5": 66.8,
+  "pct_rsi_lt40": 11.5,
+  "pct_up": 66.5,
   "n": 615,
   "bottoming": false,
   "crash": false,
@@ -25,17 +25,17 @@
      [
       "① 处于预警区（近4日曾 收盘/MA10−1 ≤ −5%）",
       false,
-      "dev10 -3.2%"
+      "dev10 -1.3%"
      ],
      [
       "② MACD柱见谷回升（今柱 > 昨柱）",
       false,
-      "MACD 19.6（昨 29.2）"
+      "MACD 17.9（昨 19.6）"
      ],
      [
       "③ KDJ-K勾头向上（今K > 昨K）",
-      false,
-      "K 36.2（昨 45.3）"
+      true,
+      "K 36.3（昨 36.2）"
      ],
      [
       "④ 首次确认（昨日未同时成立，起涨首日建首仓40–50%）",
@@ -47,7 +47,7 @@
      [
       "深超卖·加仓（RSI<35 且 K<20 → 仓位加至70–100%）",
       false,
-      "RSI 45.1 · K 36.2"
+      "RSI 48.0 · K 36.3"
      ]
     ],
     "ok": false
@@ -61,32 +61,32 @@
        [
         "科创综指仍高于MA10",
         false,
-        "收盘 1942.9 · MA10 2007.0"
+        "收盘 1979.7 · MA10 2006.0"
        ],
        [
         "RSI ≥ 62",
         false,
-        "RSI 45.1"
+        "RSI 48.0"
        ],
        [
         "MACD为正且衰减至0–10且较前一日下降",
         false,
-        "MACD 19.6（前 29.2）"
+        "MACD 17.9（前 19.6）"
        ],
        [
         "KDJ K < D",
         true,
-        "K 36.2 · D 53.1"
+        "K 36.3 · D 47.5"
        ],
        [
         "站上MA10个股占比 ≤ 50%",
-        true,
-        "31.2%"
+        false,
+        "51.1%"
        ],
        [
         "当日上涨个股占比 ≤ 35%",
-        true,
-        "33.0%"
+        false,
+        "66.5%"
        ]
       ],
       "ok": false
@@ -4508,6 +4508,18 @@
    "pct_above_ma5": 59.2,
    "pct_rsi_lt40": 8.3,
    "pct_up": 33.0,
+   "n": 615,
+   "bottoming": false,
+   "crash": false
+  },
+  {
+   "date": "2026-08-31",
+   "idx_close": 1979.75,
+   "idx_ret": 1.9,
+   "pct_above_ma10": 51.1,
+   "pct_above_ma5": 66.8,
+   "pct_rsi_lt40": 11.5,
+   "pct_up": 66.5,
    "n": 615,
    "bottoming": false,
    "crash": false
