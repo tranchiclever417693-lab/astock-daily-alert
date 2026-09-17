@@ -1,20 +1,20 @@
 {
- "updated": "2026-09-16 20:46",
+ "updated": "2026-09-17 20:46",
  "board": {
   "id": "star",
   "name": "科创板风险预警",
   "index_name": "科创综指",
   "index_eod": "sh000680"
  },
- "latest_date": "2026-09-16",
+ "latest_date": "2026-09-17",
  "latest": {
-  "date": "2026-09-16",
-  "idx_close": 1890.25,
-  "idx_ret": 3.6,
-  "pct_above_ma10": 46.8,
-  "pct_above_ma5": 70.3,
-  "pct_rsi_lt40": 25.3,
-  "pct_up": 88.0,
+  "date": "2026-09-17",
+  "idx_close": 1887.34,
+  "idx_ret": -0.15,
+  "pct_above_ma10": 48.5,
+  "pct_above_ma5": 73.3,
+  "pct_rsi_lt40": 26.3,
+  "pct_up": 42.8,
   "n": 617,
   "bottoming": false,
   "crash": false,
@@ -25,17 +25,17 @@
      [
       "① 处于预警区（近4日曾 收盘/MA10−1 ≤ −5%）",
       false,
-      "dev10 +1.6%"
+      "dev10 +1.5%"
      ],
      [
       "② MACD柱见谷回升（今柱 > 昨柱）",
       true,
-      "MACD -4.8（昨 -16.4）"
+      "MACD 3.1（昨 -4.8）"
      ],
      [
       "③ KDJ-K勾头向上（今K > 昨K）",
       true,
-      "K 39.3（昨 23.4）"
+      "K 53.5（昨 39.3）"
      ],
      [
       "④ 首次确认（昨日未同时成立，起涨首日建首仓40–50%）",
@@ -47,7 +47,7 @@
      [
       "深超卖·加仓（RSI<35 且 K<20 → 仓位加至70–100%）",
       false,
-      "RSI 46.6 · K 39.3"
+      "RSI 46.4 · K 53.5"
      ]
     ],
     "ok": false
@@ -61,32 +61,32 @@
        [
         "科创综指仍高于MA10",
         true,
-        "收盘 1890.3 · MA10 1860.6"
+        "收盘 1887.3 · MA10 1858.7"
        ],
        [
         "RSI ≥ 62",
         false,
-        "RSI 46.6"
+        "RSI 46.4"
        ],
        [
         "MACD为正且衰减至0–10且较前一日下降",
         false,
-        "MACD -4.8（前 -16.4）"
+        "MACD 3.1（前 -4.8）"
        ],
        [
         "KDJ K < D",
         false,
-        "K 39.3 · D 26.1"
+        "K 53.5 · D 35.3"
        ],
        [
         "站上MA10个股占比 ≤ 50%",
         true,
-        "46.8%"
+        "48.5%"
        ],
        [
         "当日上涨个股占比 ≤ 35%",
         false,
-        "88.0%"
+        "42.8%"
        ]
       ],
       "ok": false
@@ -4664,6 +4664,18 @@
    "pct_above_ma5": 70.3,
    "pct_rsi_lt40": 25.3,
    "pct_up": 88.0,
+   "n": 617,
+   "bottoming": false,
+   "crash": false
+  },
+  {
+   "date": "2026-09-17",
+   "idx_close": 1887.34,
+   "idx_ret": -0.15,
+   "pct_above_ma10": 48.5,
+   "pct_above_ma5": 73.3,
+   "pct_rsi_lt40": 26.3,
+   "pct_up": 42.8,
    "n": 617,
    "bottoming": false,
    "crash": false
