@@ -1,22 +1,22 @@
 {
- "updated": "2026-10-23 20:47",
+ "updated": "2026-10-26 22:30",
  "board": {
   "id": "star",
   "name": "科创板风险预警",
   "index_name": "科创综指",
   "index_eod": "sh000680"
  },
- "latest_date": "2026-10-23",
+ "latest_date": "2026-10-26",
  "latest": {
-  "date": "2026-10-23",
-  "idx_close": 1606.48,
-  "idx_ret": 3.68,
-  "pct_above_ma10": 39.4,
-  "pct_above_ma5": 59.6,
-  "pct_rsi_lt40": 44.4,
-  "pct_up": 90.0,
+  "date": "2026-10-26",
+  "idx_close": 1573.83,
+  "idx_ret": -2.03,
+  "pct_above_ma10": 38.4,
+  "pct_above_ma5": 42.0,
+  "pct_rsi_lt40": 45.1,
+  "pct_up": 29.3,
   "n": 617,
-  "bottoming": true,
+  "bottoming": false,
   "crash": false,
   "detail": {
    "bottoming": {
@@ -25,32 +25,32 @@
      [
       "① 处于预警区（近4日曾 收盘/MA10−1 ≤ −5%）",
       true,
-      "dev10 -0.8%"
+      "dev10 -1.9%"
      ],
      [
       "② MACD柱见谷回升（今柱 > 昨柱）",
       true,
-      "MACD -30.1（昨 -42.3）"
+      "MACD -23.6（昨 -30.1）"
      ],
      [
       "③ KDJ-K勾头向上（今K > 昨K）",
       true,
-      "K 24.7（昨 12.2）"
+      "K 30.6（昨 24.7）"
      ],
      [
       "④ 首次确认（昨日未同时成立，起涨首日建首仓40–50%）",
-      true,
-      "首次确认"
+      false,
+      "—"
      ]
     ],
     "extras": [
      [
       "深超卖·加仓（RSI<35 且 K<20 → 仓位加至70–100%）",
       false,
-      "RSI 34.2 · K 24.7"
+      "RSI 31.9 · K 30.6"
      ]
     ],
-    "ok": true
+    "ok": false
    },
    "crash": {
     "label": "科创板大跌预警",
@@ -61,32 +61,32 @@
        [
         "科创综指仍高于MA10",
         false,
-        "收盘 1606.5 · MA10 1619.6"
+        "收盘 1573.8 · MA10 1604.3"
        ],
        [
         "RSI ≥ 62",
         false,
-        "RSI 34.2"
+        "RSI 31.9"
        ],
        [
         "MACD为正且衰减至0–10且较前一日下降",
         false,
-        "MACD -30.1（前 -42.3）"
+        "MACD -23.6（前 -30.1）"
        ],
        [
         "KDJ K < D",
         false,
-        "K 24.7 · D 17.9"
+        "K 30.6 · D 22.1"
        ],
        [
         "站上MA10个股占比 ≤ 50%",
         true,
-        "39.4%"
+        "38.4%"
        ],
        [
         "当日上涨个股占比 ≤ 35%",
-        false,
-        "90.0%"
+        true,
+        "29.3%"
        ]
       ],
       "ok": false
@@ -4894,6 +4894,18 @@
    "pct_up": 90.0,
    "n": 617,
    "bottoming": true,
+   "crash": false
+  },
+  {
+   "date": "2026-10-26",
+   "idx_close": 1573.83,
+   "idx_ret": -2.03,
+   "pct_above_ma10": 38.4,
+   "pct_above_ma5": 42.0,
+   "pct_rsi_lt40": 45.1,
+   "pct_up": 29.3,
+   "n": 617,
+   "bottoming": false,
    "crash": false
   }
  ]
