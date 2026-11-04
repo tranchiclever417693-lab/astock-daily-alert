@@ -1,22 +1,22 @@
 {
- "updated": "2026-11-03 23:28",
+ "updated": "2026-11-04 23:44",
  "board": {
   "id": "chinext",
   "name": "创业板指风险预警",
   "index_name": "创业板指",
   "index_eod": "sz399006"
  },
- "latest_date": "2026-11-03",
+ "latest_date": "2026-11-04",
  "latest": {
-  "date": "2026-11-03",
-  "idx_close": 2391.65,
-  "idx_ret": -2.73,
-  "pct_above_ma10": 19.0,
-  "pct_above_ma5": 26.0,
-  "pct_rsi_lt40": 57.7,
-  "pct_up": 23.5,
+  "date": "2026-11-04",
+  "idx_close": 2544.73,
+  "idx_ret": 6.4,
+  "pct_above_ma10": 41.1,
+  "pct_above_ma5": 82.8,
+  "pct_rsi_lt40": 36.4,
+  "pct_up": 93.0,
   "n": 1410,
-  "bottoming": false,
+  "bottoming": true,
   "crash": false,
   "detail": {
    "bottoming": {
@@ -24,33 +24,33 @@
     "conds": [
      [
       "① KDJ金叉（当日K>D 且 昨日K≤D）",
-      false,
-      "今 K10.7/D14.1 · 昨 K13.6/D15.8"
+      true,
+      "今 K24.7/D17.6 · 昨 K10.7/D14.1"
      ],
      [
       "② 近6日曾超卖（J<0 或 K<20）",
       true,
-      "J 3.8 · K 10.7"
+      "J 38.9 · K 24.7"
      ],
      [
       "③ 收盘站上MA5",
-      false,
-      "收盘 2391.7 · MA5 2483.3"
+      true,
+      "收盘 2544.7 · MA5 2465.3"
      ]
     ],
     "extras": [
      [
       "量能温和放大（金叉日量比 > 1.0）",
-      false,
-      "量比 1.00"
+      true,
+      "量比 1.19"
      ],
      [
       "J<0 左侧试探预警（可先建试探仓）",
       false,
-      "J 3.8"
+      "J 38.9"
      ]
     ],
-    "ok": false
+    "ok": true
    },
    "crash": {
     "label": "创业板大跌预警",
@@ -60,28 +60,28 @@
       "conds": [
        [
         "创业板指仍在MA10上方",
-        false,
-        "收盘 2391.7 · MA10 2555.8"
+        true,
+        "收盘 2544.7 · MA10 2540.8"
        ],
        [
         "MACD较前一日走弱",
         false,
-        "MACD -35.0（前 -36.5）"
+        "MACD -9.1（前 -35.0）"
        ],
        [
         "KDJ K < D",
-        true,
-        "K 10.7 · D 14.1"
+        false,
+        "K 24.7 · D 17.6"
        ],
        [
         "站上MA10个股占比 ≤ 20%",
-        true,
-        "19.0%"
+        false,
+        "41.1%"
        ],
        [
         "当日上涨个股占比 ≤ 30%",
-        true,
-        "23.5%"
+        false,
+        "93.0%"
        ]
       ],
       "ok": false
@@ -91,28 +91,28 @@
       "conds": [
        [
         "创业板指仍在MA10上方",
-        false,
-        "收盘 2391.7 · MA10 2555.8"
+        true,
+        "收盘 2544.7 · MA10 2540.8"
        ],
        [
         "RSI ≥ 65",
         false,
-        "RSI 25.1"
+        "RSI 36.3"
        ],
        [
         "KDJ K ≥ 80",
         false,
-        "K 10.7"
+        "K 24.7"
        ],
        [
         "成交量 ≥ 前5日均量1.15倍",
-        false,
-        "量比 1.00"
+        true,
+        "量比 1.19"
        ],
        [
         "站上MA5个股占比较前一日下降",
-        true,
-        "今 26.0% · 昨 34.2%"
+        false,
+        "今 82.8% · 昨 26.0%"
        ]
       ],
       "ok": false
@@ -5004,6 +5004,18 @@
    "pct_up": 23.5,
    "n": 1410,
    "bottoming": false,
+   "crash": false
+  },
+  {
+   "date": "2026-11-04",
+   "idx_close": 2544.73,
+   "idx_ret": 6.4,
+   "pct_above_ma10": 41.1,
+   "pct_above_ma5": 82.8,
+   "pct_rsi_lt40": 36.4,
+   "pct_up": 93.0,
+   "n": 1410,
+   "bottoming": true,
    "crash": false
   }
  ]
